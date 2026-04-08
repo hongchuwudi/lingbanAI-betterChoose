@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <!-- 一. Maven模型版本，固定值 -->
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- 二. 父项目：继承项目父POM -->
+    <parent>
+        <groupId>com.hongchu</groupId>          <!-- 组织ID -->
+        <artifactId>common-base</artifactId>       <!-- 父项目名称 -->
+        <version>0.0.1-SNAPSHOT</version>          <!-- 父项目版本 -->
+    </parent>
+
+    <!-- 三. 模块基本信息 -->
+    <artifactId>cb-common</artifactId>             <!-- 模块名称 -->
+    <name>Common Module</name>                      <!-- 模块显示名称 -->
+    <description>通用工具模块</description>           <!-- 模块描述 -->
+
+    <!-- 四. 依赖配置 -->
+    <dependencies>
+        <!-- ============ Lombok开发工具 ============ -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>            <!-- Lombok组织 -->
+            <artifactId>lombok</artifactId>                 <!-- Lombok工具 -->
+            <optional>true</optional>                       <!-- 可选依赖，不会传递 -->
+        </dependency>
+
+        <!-- ============ Hutool工具包 ============ -->
+        <dependency>
+            <groupId>cn.hutool</groupId>                    <!-- Hutool组织 -->
+            <artifactId>hutool-all</artifactId>             <!-- 完整工具包 -->
+        </dependency>
+
+        <!-- ============ Apache Commons ============ -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>           <!-- Apache组织 -->
+            <artifactId>commons-lang3</artifactId>          <!-- 字符串工具类 -->
+        </dependency>
+
+        <!-- ============ 二维码生成 ============ -->
+        <dependency>
+            <groupId>com.google.zxing</groupId>             <!-- ZXing组织 -->
+            <artifactId>core</artifactId>                   <!-- 二维码核心库 -->
+        </dependency>
+        <dependency>
+            <groupId>com.google.zxing</groupId>             <!-- ZXing组织 -->
+            <artifactId>javase</artifactId>                 <!-- 二维码JavaSE支持 -->
+        </dependency>
+
+        <!-- ============ JWT Token支持 ============ -->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>              <!-- JJWT组织 -->
+            <artifactId>jjwt-api</artifactId>               <!-- 已修正: 使用jjwt-api -->
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>              <!-- 已修正: 添加jjwt-impl -->
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>           <!-- 已修正: 添加jjwt-jackson -->
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- ============ 邮箱email ============ -->
+        <dependency>
+            <groupId>com.sun.mail</groupId>
+            <artifactId>jakarta.mail</artifactId>
+        </dependency>
+
+        <!-- ============ 阿里云OSS ============ -->
+        <dependency>
+            <groupId>com.aliyun.oss</groupId>               <!-- 阿里云组织 -->
+            <artifactId>aliyun-sdk-oss</artifactId>         <!-- OSS SDK -->
+        </dependency>
+
+        <!-- ============ 测试依赖 ============ -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>            <!-- JUnit组织 -->
+            <artifactId>junit-jupiter</artifactId>          <!-- JUnit测试框架 -->
+            <scope>test</scope>                             <!-- 测试作用域 -->
+        </dependency>
+        <!-- ============ Spring相关依赖 ============ -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-beans</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-jdbc</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context-support</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-core</artifactId>
+            <version>3.5.6</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+    <!-- 五. 构建配置 -->
+    <build>
+        <plugins>
+            <!-- Maven编译插件 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId> <!-- Maven官方插件 -->
+                <artifactId>maven-compiler-plugin</artifactId> <!-- 编译插件 -->
+                <version>3.11.0</version>                   <!-- 插件版本 -->
+                <configuration>
+                    <source>17</source>                     <!-- 源码兼容版本 -->
+                    <target>17</target>                     <!-- 目标字节码版本 -->
+                    <!-- 注解处理器路径 -->
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.v}</version> <!-- Lombok注解处理器 -->
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

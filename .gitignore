@@ -1,0 +1,261 @@
+# ===========================================
+# 灵伴AI 项目统一 Git 忽略配置
+# ===========================================
+
+# -------------------- 通用 --------------------
+# 操作系统
+.DS_Store
+Thumbs.db
+
+# 日志文件
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# 临时文件
+*.swp
+*.swo
+*.tmp
+*.temp
+*.local
+
+# -------------------- IDE / 编辑器 --------------------
+# IntelliJ IDEA / Android Studio
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# VS Code
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# Sublime Text
+*.sublime-workspace
+
+# -------------------- Java / Spring Boot --------------------
+# Maven
+target/
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# Spring Boot
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+# Gradle
+.gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+gradle-app.setting
+!gradle-wrapper.jar
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# 项目配置文件 (敏感信息)
+application-*.yml
+application-*.properties
+**/application-dev.yml
+**/application-prod.yml
+**/application-test.yml
+
+# -------------------- 敏感信息 --------------------
+# SQL 文件 (可能包含数据库结构)
+*.sql
+
+# 密钥和证书
+*.pem
+*.key
+*.crt
+*.p12
+*.jks
+*.keystore
+
+# 环境配置文件
+.env
+.env.*
+!.env.example
+
+# 本地配置
+local.properties
+
+# 敏感配置目录
+**/secrets/
+**/credentials/
+
+# -------------------- Node.js / Vue --------------------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 构建输出
+dist/
+dist-ssr/
+
+# 打包文件
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# -------------------- Flutter / Dart --------------------
+# Dart
+*.class
+*.pyc
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+.packages
+.metadata
+
+# Flutter 构建
+/build/
+/coverage/
+**/doc/api/
+
+# Flutter 平台特定
+**/ios/Flutter/.last_build_id
+**/Flutter/ephemeral/
+**/Flutter/App.framework
+**/Flutter/Flutter.framework
+**/Flutter/Flutter.podspec
+**/Flutter/Generated.xcconfig
+**/Flutter/app.flx
+**/Flutter/app.zip
+**/Flutter/flutter_assets/
+**/Flutter/flutter_export_environment.sh
+
+# 符号化相关
+app.*.symbols
+
+# 混淆相关
+app.*.map.json
+
+# -------------------- Android --------------------
+/android/app/debug/
+/android/app/profile/
+/android/app/release/
+/android/.gradle/
+/android/captures/
+/android/gradlew
+/android/gradlew.bat
+/android/local.properties
+/android/.cxx/
+GeneratedPluginRegistrant.java
+key.properties
+**/*.keystore
+**/*.jks
+
+# Android Studio 构建产物
+*.apk
+*.ap_
+*.aab
+
+# -------------------- iOS / macOS --------------------
+# Xcode
+**/dgph
+*.mode1v3
+*.mode2v3
+*.moved-aside
+*.pbxuser
+*.perspectivev3
+**/*sync/
+.sconsign.dblite
+.tags*
+**/.vagrant/
+**/DerivedData/
+Icon?
+**/Pods/
+**/.symlinks/
+profile
+xcuserdata
+**/.generated/
+ServiceDefinitions.json
+Runner/GeneratedPluginRegistrant.*
+
+# iOS 构建产物
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# CocoaPods
+**/Pods/
+Podfile.lock
+
+# macOS
+**/xcuserdata/
+
+# -------------------- Windows --------------------
+# Visual Studio
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+x64/
+x86/
+*.[Cc]ache
+!*.[Cc]ache/
+
+# Windows 构建产物
+*.exe
+*.dll
+
+# -------------------- Linux --------------------
+flutter/ephemeral
+
+# -------------------- 其他 --------------------
+# 帮助文档
+HELP.md
+
+# 数据源
+/dataSources/
+/dataSources.local.xml
+
+# HTTP 请求
+/httpRequests/
+
+# 查询文件
+/queries/
+
+# Shelf
+/shelf/
+
+# 工作区
+/workspace.xml
+
+# 迁移
+migrate_working_dir/
+
+# 历史记录
+.history/
+.atom/
+.build/
+.buildlog/
+.svn/
+.swiftpm/
+
+# 测试覆盖率
+coverage/
+.nyc_output/

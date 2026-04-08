@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI对话助手</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Vue 2 -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.min.js"></script>
+    <!-- Element UI 图标 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
+    <!-- 自定义样式 -->
+    <style>
+        /* 自定义滚动条样式 */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* 消息气泡动画 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message-animation {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        /* 打字机效果 */
+        .typing-indicator {
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .typing-indicator span {
+            height: 8px;
+            width: 8px;
+            margin: 0 2px;
+            background-color: #9ca3af;
+            border-radius: 50%;
+            display: inline-block;
+            animation: typing 1.4s infinite ease-in-out both;
+        }
+
+        .typing-indicator span:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+
+        .typing-indicator span:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+
+        @keyframes typing {
+            0%, 80%, 100% {
+                transform: scale(0.6);
+                opacity: 0.5;
+            }
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* 文件上传区域样式 */
+        .file-upload-area {
+            transition: all 0.3s ease;
+        }
+
+        .file-upload-area.dragover {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+<div id="app" class="min-h-screen flex flex-col">
+    <!-- 顶部导航栏 -->
+    <header class="bg-white border-b border-gray-200 py-3 px-4 shadow-sm">
+        <div class="max-w-4xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-blue-500 w-8 h-8 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-robot text-white text-lg"></i>
+                </div>
+                <h1 class="text-xl font-semibold text-gray-800">AI对话助手</h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="text-sm text-gray-500">
+                        <span v-if="chatId" class="bg-blue-50 text-blue-600 px-2 py-1 rounded text-xs">
+                            会话ID: {{ chatId.substring(0, 8) }}...
+                        </span>
+                </div>
+                <button @click="newChat" class="flex items-center space-x-1 text-sm text-gray-600 hover:text-blue-600 transition-colors">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>新对话</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主聊天区域 -->
+    <main class="flex-1 overflow-hidden max-w-4xl mx-auto w-full p-4">
+        <!-- 消息列表 -->
+        <div class="h-full flex flex-col">
+            <div class="flex-1 overflow-y-auto p-4 custom-scrollbar" ref="messagesContainer">
+                <!-- 空状态 -->
+                <div v-if="messages.length === 0" class="h-full flex flex-col items-center justify-center text-gray-500 space-y-4 py-12">
+                    <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center">
+                        <i class="fas fa-robot text-blue-500 text-2xl"></i>
+                    </div>
+                    <h2 class="text-xl font-medium text-gray-700">开始与AI喵对话</h2>
+                    <p class="text-center text-gray-500 max-w-md">
+                        说出你想说的话，AI喵将为您解答。支持上下文对话，上传图片或文档进行多模态分析。
+                    </p>
+                    <div class="grid grid-cols-2 gap-4 mt-4 max-w-md">
+                        <div class="bg-white p-3 rounded-lg border border-gray-200 text-sm">
+                            <i class="fas fa-comment-dots text-blue-500 mr-2"></i>
+                            支持上下文记忆
+                        </div>
+                        <div class="bg-white p-3 rounded-lg border border-gray-200 text-sm">
+                            <i class="fas fa-file-upload text-blue-500 mr-2"></i>
+                            支持文件上传
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 消息列表 -->
+                <div v-else class="space-y-6">
+                    <div v-for="(message, index) in messages" :key="index"
+                         class="message-animation"
+                         :class="{'flex justify-end': message.role === 'user', 'flex justify-start': message.role === 'assistant'}">
+                        <!-- 用户消息 -->
+                        <div v-if="message.role === 'user'" class="max-w-[80%]">
+                            <div class="flex items-end space-x-2">
+                                <div class="mb-1">
+                                    <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-user text-white text-sm"></i>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="bg-blue-500 text-white rounded-2xl rounded-tr-none px-4 py-3">
+                                        <div v-html="formatMessage(message.content)"></div>
+                                        <!-- 附件显示 -->
+                                        <div v-if="message.files && message.files.length > 0" class="mt-2 space-y-2">
+                                            <div v-for="(file, i) in message.files" :key="i" class="bg-blue-400 bg-opacity-30 rounded-lg p-2 flex items-center">
+                                                <i :class="getFileIcon(file)" class="mr-2"></i>
+                                                <span class="text-sm truncate">{{ file.name }}</span>
+                                                <span class="text-xs ml-2">{{ formatFileSize(file.size) }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="text-xs text-gray-500 mt-1 text-right">
+                                        {{ formatTime(message.timestamp) }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- AI消息 -->
+                        <div v-else class="max-w-[80%]">
+                            <div class="flex items-end space-x-2">
+                                <div class="mb-1">
+                                    <div class="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-robot text-white text-sm"></i>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="bg-gray-100 text-gray-800 rounded-2xl rounded-tl-none px-4 py-3">
+                                        <div v-if="message.isStreaming && message.content === ''" class="typing-indicator">
+                                            <span></span>
+                                            <span></span>
+                                            <span></span>
+                                        </div>
+                                        <div v-else v-html="formatMessage(message.content)"></div>
+                                    </div>
+                                    <div class="text-xs text-gray-500 mt-1">
+                                        {{ formatTime(message.timestamp) }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI正在输入 -->
+                    <div v-if="isLoading" class="flex justify-start">
+                        <div class="max-w-[80%]">
+                            <div class="flex items-end space-x-2">
+                                <div class="mb-1">
+                                    <div class="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-robot text-white text-sm"></i>
+                                    </div>
+                                </div>
+                                <div class="bg-gray-100 text-gray-800 rounded-2xl rounded-tl-none px-4 py-3">
+                                    <div class="typing-indicator">
+                                        <span></span>
+                                        <span></span>
+                                        <span></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 输入区域 -->
+    <footer class="border-t border-gray-200 bg-white py-4">
+        <div class="max-w-4xl mx-auto px-4">
+            <!-- 文件上传区域 -->
+            <div v-if="files.length > 0" class="mb-3">
+                <div class="flex items-center justify-between bg-blue-50 rounded-lg p-3">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-paperclip text-blue-500"></i>
+                        <span class="text-sm font-medium text-blue-700">已选择 {{ files.length }} 个文件</span>
+                    </div>
+                    <button @click="clearFiles" class="text-gray-500 hover:text-red-500">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <div class="flex flex-wrap gap-2 mt-2">
+                    <div v-for="(file, index) in files" :key="index" class="flex items-center bg-gray-100 rounded-lg px-3 py-2 text-sm">
+                        <i :class="getFileIcon(file)" class="mr-2 text-gray-600"></i>
+                        <span class="truncate max-w-[120px]">{{ file.name }}</span>
+                        <span class="text-xs text-gray-500 ml-2">{{ formatFileSize(file.size) }}</span>
+                        <button @click="removeFile(index)" class="ml-2 text-gray-400 hover:text-red-500">
+                            <i class="fas fa-times text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 输入框和按钮 -->
+            <div class="flex items-end space-x-3">
+                <!-- 文件上传按钮 -->
+                <div class="relative">
+                    <input type="file" multiple @change="handleFileSelect" ref="fileInput" class="hidden" accept="image/*,.pdf,.doc,.docx,.txt">
+                    <button @click="triggerFileInput" class="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors">
+                        <i class="fas fa-paperclip text-gray-600"></i>
+                    </button>
+                    <div class="absolute bottom-full mb-2 left-0 bg-gray-800 text-white text-xs rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                        上传文件
+                    </div>
+                </div>
+
+                <!-- 文本输入框 -->
+                <div class="flex-1 relative">
+                        <textarea
+                                v-model="inputMessage"
+                                @keydown.enter.exact.prevent="sendMessage"
+                                placeholder="输入您的问题（按Enter发送，Shift+Enter换行）..."
+                                class="w-full border border-gray-300 rounded-xl py-3 px-4 pr-12 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none custom-scrollbar"
+                                rows="1"
+                                ref="textInput"
+                                @input="autoResizeTextarea"
+                        ></textarea>
+
+                    <div class="absolute right-3 bottom-3 flex items-center space-x-2">
+                        <button v-if="inputMessage.trim()" @click="clearInput" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <button @click="sendMessage" :disabled="!canSend" class="w-8 h-8 rounded-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center transition-colors">
+                            <i class="fas fa-paper-plane text-white"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 提示信息 -->
+            <div class="mt-3 text-xs text-gray-500 flex items-center justify-between">
+                <div>
+                        <span class="inline-flex items-center">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            支持上下文对话，会话ID: {{ chatId ? chatId.substring(0, 10) + '...' : '新会话' }}
+                        </span>
+                </div>
+                <div>
+                        <span class="inline-flex items-center">
+                            <i class="fas fa-bolt mr-1"></i>
+                            支持上传图片、PDF、Word、TXT等文件进行分析
+                        </span>
+                </div>
+            </div>
+        </div>
+    </footer>
+</div>
+
+<script>
+    new Vue({
+        el: '#app',
+        data: {
+            inputMessage: '',
+            messages: [],
+            files: [],
+            chatId: null,
+            isLoading: false,
+            isStreaming: false,
+            currentStreamingContent: '',
+            currentStreamingMessageIndex: -1
+        },
+        computed: {
+            canSend() {
+                return this.inputMessage.trim() !== '' || this.files.length > 0;
+            }
+        },
+        mounted() {
+            this.generateChatId();
+            this.loadFromLocalStorage();
+
+            // 设置初始会话示例
+            if (this.messages.length === 0) {
+                setTimeout(() => {
+                    this.messages.push({
+                        role: 'assistant',
+                        content: '您好！我是一条大憨憨，你可以说出你的问题,也可以上传图片或文档,本喵可以会努力回答的!。',
+                        timestamp: new Date(),
+                        isStreaming: false
+                    });
+                    this.saveToLocalStorage();
+                    this.scrollToBottom();
+                }, 500);
+            }
+        },
+        watch: {
+            messages: {
+                handler() {
+                    this.scrollToBottom();
+                    this.saveToLocalStorage();
+                },
+                deep: true
+            }
+        },
+        methods: {
+            // 生成会话ID
+            generateChatId() {
+                if (!this.chatId) {
+                    const timestamp = Date.now().toString(36);
+                    const randomStr = Math.random().toString(36).substring(2, 8);
+                    this.chatId = `chat_${timestamp}_${randomStr}`;
+                }
+            },
+
+            // 发送消息
+            async sendMessage() {
+                if (!this.canSend || this.isLoading) return;
+
+                const userMessage = this.inputMessage.trim();
+                const userFiles = [...this.files];
+
+                // 添加用户消息
+                this.messages.push({
+                    role: 'user',
+                    content: userMessage,
+                    files: userFiles,
+                    timestamp: new Date(),
+                    isStreaming: false
+                });
+
+                // 添加AI消息占位符
+                const aiMessageIndex = this.messages.length;
+                this.messages.push({
+                    role: 'assistant',
+                    content: '',
+                    timestamp: new Date(),
+                    isStreaming: true
+                });
+
+                // 清空输入
+                this.clearInput();
+                this.clearFiles();
+
+                // 设置加载状态
+                this.isLoading = true;
+                this.isStreaming = true;
+                this.currentStreamingMessageIndex = aiMessageIndex;
+
+                try {
+                    // 创建FormData
+                    const formData = new FormData();
+                    formData.append('prompt', userMessage);
+                    formData.append('chatId', this.chatId);
+
+                    // 添加文件
+                    if (userFiles.length > 0) {
+                        userFiles.forEach(file => {
+                            formData.append('files', file);
+                        });
+                    }
+
+                    // 调用后端API
+                    const response = await fetch('http://localhost:15555/ai/chat', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP错误: ${response.status}`);
+                    }
+
+                    // 处理流式响应
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+                    let aiResponse = '';
+
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+
+                        const chunk = decoder.decode(value);
+                        aiResponse += chunk;
+
+                        // 更新AI消息内容
+                        this.messages[this.currentStreamingMessageIndex].content = aiResponse;
+                        this.messages[this.currentStreamingMessageIndex].isStreaming = true;
+                    }
+
+                    // 完成流式响应
+                    this.messages[this.currentStreamingMessageIndex].isStreaming = false;
+
+                } catch (error) {
+                    console.error('发送消息失败:', error);
+                    this.messages[this.currentStreamingMessageIndex].content = '抱歉，发生错误: ' + error.message;
+                    this.messages[this.currentStreamingMessageIndex].isStreaming = false;
+                } finally {
+                    this.isLoading = false;
+                    this.isStreaming = false;
+                    this.currentStreamingMessageIndex = -1;
+                }
+            },
+
+            // 处理文件选择
+            handleFileSelect(event) {
+                const selectedFiles = Array.from(event.target.files);
+
+                // 限制文件大小和类型
+                const validFiles = selectedFiles.filter(file => {
+                    const maxSize = 10 * 1024 * 1024; // 10MB
+                    if (file.size > maxSize) {
+                        alert(`文件 ${file.name} 超过10MB限制`);
+                        return false;
+                    }
+                    return true;
+                });
+
+                this.files.push(...validFiles);
+                this.$refs.fileInput.value = '';
+            },
+
+            // 触发文件选择
+            triggerFileInput() {
+                this.$refs.fileInput.click();
+            },
+
+            // 移除单个文件
+            removeFile(index) {
+                this.files.splice(index, 1);
+            },
+
+            // 清空所有文件
+            clearFiles() {
+                this.files = [];
+            },
+
+            // 清空输入框
+            clearInput() {
+                this.inputMessage = '';
+                this.$nextTick(() => {
+                    this.autoResizeTextarea();
+                });
+            },
+
+            // 开始新对话
+            newChat() {
+                if (this.messages.length > 0) {
+                    if (confirm('确定要开始新的对话吗？当前对话记录将被保存。')) {
+                        this.messages = [];
+                        this.generateChatId();
+                        this.saveToLocalStorage();
+
+                        // 添加欢迎消息
+                        setTimeout(() => {
+                            this.messages.push({
+                                role: 'assistant',
+                                content: '您好！我是AI助手，可以回答您的问题。您可以上传图片或文档，我可以帮您分析其中的内容。',
+                                timestamp: new Date(),
+                                isStreaming: false
+                            });
+                            this.saveToLocalStorage();
+                        }, 300);
+                    }
+                }
+            },
+
+            // 自动调整文本域高度
+            autoResizeTextarea() {
+                const textarea = this.$refs.textInput;
+                textarea.style.height = 'auto';
+                textarea.style.height = Math.min(textarea.scrollHeight, 150) + 'px';
+            },
+
+            // 格式化消息内容（简单的换行处理）
+            formatMessage(content) {
+                if (!content) return '';
+                return content.replace(/\n/g, '<br>');
+            },
+
+            // 格式化时间
+            formatTime(timestamp) {
+                const date = new Date(timestamp);
+                return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            },
+
+            // 格式化文件大小
+            formatFileSize(bytes) {
+                if (bytes === 0) return '0 B';
+                const k = 1024;
+                const sizes = ['B', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+            },
+
+            // 获取文件图标
+            getFileIcon(file) {
+                const type = file.type || '';
+                const name = file.name.toLowerCase();
+
+                if (type.startsWith('image/')) {
+                    return 'fas fa-image text-green-500';
+                } else if (type.includes('pdf') || name.endsWith('.pdf')) {
+                    return 'fas fa-file-pdf text-red-500';
+                } else if (type.includes('word') || name.endsWith('.doc') || name.endsWith('.docx')) {
+                    return 'fas fa-file-word text-blue-500';
+                } else if (type.includes('text') || name.endsWith('.txt')) {
+                    return 'fas fa-file-alt text-gray-500';
+                } else {
+                    return 'fas fa-file text-gray-500';
+                }
+            },
+
+            // 滚动到底部
+            scrollToBottom() {
+                this.$nextTick(() => {
+                    const container = this.$refs.messagesContainer;
+                    if (container) {
+                        container.scrollTop = container.scrollHeight;
+                    }
+                });
+            },
+
+            // 保存到本地存储
+            saveToLocalStorage() {
+                const chatData = {
+                    chatId: this.chatId,
+                    messages: this.messages.map(msg => ({
+                        role: msg.role,
+                        content: msg.content,
+                        timestamp: msg.timestamp.getTime(),
+                        files: msg.files ? msg.files.map(file => ({
+                            name: file.name,
+                            size: file.size,
+                            type: file.type
+                        })) : []
+                    }))
+                };
+
+                localStorage.setItem('aiChatData', JSON.stringify(chatData));
+            },
+
+            // 从本地存储加载
+            loadFromLocalStorage() {
+                const savedData = localStorage.getItem('aiChatData');
+                if (savedData) {
+                    try {
+                        const chatData = JSON.parse(savedData);
+                        this.chatId = chatData.chatId;
+                        this.messages = chatData.messages.map(msg => ({
+                            role: msg.role,
+                            content: msg.content,
+                            timestamp: new Date(msg.timestamp),
+                            files: msg.files || [],
+                            isStreaming: false
+                        }));
+                    } catch (e) {
+                        console.error('加载本地存储数据失败:', e);
+                        this.generateChatId();
+                    }
+                }
+            }
+        }
+    });
+</script>
+</body>
+</html>

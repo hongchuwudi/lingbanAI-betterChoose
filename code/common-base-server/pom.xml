@@ -1,0 +1,350 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <!-- 一. Maven模型版本，固定值 -->
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- 二. 父项目：继承Spring Boot的父POM，提供默认配置 -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>         <!-- Spring Boot组织ID -->
+        <artifactId>spring-boot-starter-parent</artifactId> <!-- Spring Boot启动器父项目 -->
+        <version>3.5.7</version>                            <!-- Spring Boot版本 -->
+        <relativePath/>                                     <!-- 不从本地路径查找，直接从仓库下载 -->
+    </parent>
+
+    <!-- 三. 项目基本信息 -->
+    <groupId>com.hongchu</groupId>                      <!-- 组织或公司域名反写 -->
+    <artifactId>common-base</artifactId>                <!-- 项目名称 -->
+    <version>0.0.1-SNAPSHOT</version>                   <!-- 版本号：SNAPSHOT表示开发版本 -->
+    <packaging>pom</packaging>                          <!-- 打包方式：pom表示这是多模块项目的父模块 -->
+    <name>common-base-server</name>                     <!-- 项目显示名称 -->
+    <description>基础父类pom</description>                <!-- 项目描述 -->
+
+    <!-- 四. 模块声明：列出所有子模块 -->
+    <modules>
+        <module>cb-common</module>      <!-- 通用工具模块 -->
+        <module>cb-pojo</module>        <!-- 实体类模块 -->
+        <module>cb-service</module>     <!-- 业务服务模块 -->
+    </modules>
+
+    <!-- 五. 属性定义：集中管理版本号和配置 -->
+    <properties>
+        <!-- 1. Java版本配置 -->
+        <java.version>17</java.version>                                     <!-- Java运行版本 -->
+        <maven.compiler.source>17</maven.compiler.source>                   <!-- 编译源码版本 -->
+        <maven.compiler.target>17</maven.compiler.target>                   <!-- 编译目标字节码版本 -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>  <!-- 源码编码 -->
+
+        <!-- 2. 第三方依赖版本管理 -->
+        <psql.v>42.6.0</psql.v>                                     <!-- postgres版本好 -->
+        <mysql.connector.v>8.0.33</mysql.connector.v>               <!-- MySQL驱动版本 -->
+        <lombok.v>1.18.30</lombok.v>                                <!-- Lombok工具版本 -->
+        <mybatis-plus.v>3.5.6</mybatis-plus.v>                      <!-- MyBatis-Plus版本 已修正: 3.5.10.1 for Spring Boot 3.x -->
+        <mybatis.v>3.0.5</mybatis.v>                                <!-- MyBatis版本 -->
+        <pageHelper.v>2.1.0</pageHelper.v>                          <!-- MyBatis分页插件版本 -->
+        <jjwt.v>0.11.5</jjwt.v>                                     <!-- JWT工具版本 已修正: 0.11.5 for Spring Boot 3.x -->
+        <aliyun.oss.v>3.17.4</aliyun.oss.v>                         <!-- 阿里云OSS版本 -->
+        <knife4j.v>4.4.0</knife4j.v>                                <!-- Knife4j API文档版本 -->
+        <hutool.v>5.8.26</hutool.v>                                 <!-- Hutool工具包版本 -->
+        <zxing.v>3.5.1</zxing.v>                                    <!-- 二维码生成库版本 -->
+        <spring-ai.v>1.0.0</spring-ai.v>                            <!-- Spring AI 正式版 -->
+        <jmail.v>2.0.1</jmail.v>                                    <!-- jakarta email -->
+        <commons-lang3.v>3.14.0</commons-lang3.v>                   <!-- commons-lang3-->
+        <jackson.v>2.15.4</jackson.v>                               <!-- Jackson版本 -->
+        <spring-ai-ali.v>1.1.0.0-RC2</spring-ai-ali.v>              <!-- Spring AI 阿里云版本 -->
+        <pdfbox.v>2.0.29</pdfbox.v>                                 <!--  PDFBox版本 -->
+
+        <!-- 3. Spring Boot相关版本 -->
+        <spring-boot.version>3.5.7</spring-boot.version>            <!-- Spring Boot版本 已统一 -->
+
+        <!-- 4. 内部模块版本管理 -->
+        <cb-common.v>0.0.1-SNAPSHOT</cb-common.v>                   <!-- 通用模块版本 -->
+        <cb-pojo.v>0.0.1-SNAPSHOT</cb-pojo.v>                       <!-- 实体模块版本 -->
+        <cb-service.v>0.0.1-SNAPSHOT</cb-service.v>                 <!-- 服务模块版本 -->
+
+        <!-- 5. 测试相关版本 -->
+        <junit.v>5.10.2</junit.v>                                   <!-- JUnit测试框架版本 -->
+        <mockito.v>5.9.0</mockito.v>                                <!-- Mockito模拟测试版本 -->
+    </properties>
+
+    <!-- 六. 依赖管理：统一管理所有依赖的版本，子模块引用时无需指定版本 -->
+    <dependencyManagement>
+        <dependencies>
+            <!-- ========== 内部模块依赖管理 ========== -->
+            <!-- 通用工具模块 -->
+            <dependency>
+                <groupId>com.hongchu</groupId>              <!-- 组织ID -->
+                <artifactId>cb-common</artifactId>          <!-- 通用工具模块 -->
+                <version>${cb-common.v}</version>           <!-- 使用属性中定义的版本 -->
+            </dependency>
+            <!-- 实体类模块 -->
+            <dependency>
+                <groupId>com.hongchu</groupId>              <!-- 组织ID -->
+                <artifactId>cb-pojo</artifactId>            <!-- 实体类模块 -->
+                <version>${cb-pojo.v}</version>             <!-- 使用属性中定义的版本 -->
+            </dependency>
+            <!-- 业务服务模块 -->
+            <dependency>
+                <groupId>com.hongchu</groupId>              <!-- 组织ID -->
+                <artifactId>cb-service</artifactId>         <!-- 业务服务模块 -->
+                <version>${cb-service.v}</version>          <!-- 使用属性中定义的版本 -->
+            </dependency>
+
+            <!-- ========== Spring依赖管理 ========== -->
+            <!-- 导入Spring Boot的依赖管理 -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring-boot.version}</version>   <!-- 版本号 已修正: 统一使用3.5.7 -->
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- ========== Spring AI依赖管理 ========== -->
+            <!-- 导入Spring AI BOM -->
+            <dependency>
+                <groupId>org.springframework.ai</groupId>
+                <artifactId>spring-ai-bom</artifactId>
+                <version>${spring-ai.v}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+<!--            &lt;!&ndash; Spring AI Alibaba Agent Framework &ndash;&gt;-->
+<!--            <dependency>-->
+<!--                <groupId>com.alibaba.cloud.ai</groupId>-->
+<!--                <artifactId>spring-ai-alibaba-agent-framework</artifactId>-->
+<!--                <version>${spring-ai-ali.v}</version>-->
+<!--            </dependency>-->
+
+<!--            &lt;!&ndash; DashScope ChatModel 支持（如果使用其他模型，请跳转 Spring AI 文档选择对应的 starter） &ndash;&gt;-->
+<!--            <dependency>-->
+<!--                <groupId>com.alibaba.cloud.ai</groupId>-->
+<!--                <artifactId>spring-ai-alibaba-starter-dashscope</artifactId>-->
+<!--                <version>${spring-ai-ali.v}</version>-->
+<!--            </dependency>-->
+
+            <!-- ============ 数据库相关 ============ -->
+            <!-- MySQL驱动核心依赖 -->
+<!--            <dependency>-->
+<!--                <groupId>com.mysql</groupId>                    &lt;!&ndash; MySQL组织 &ndash;&gt;-->
+<!--                <artifactId>mysql-connector-j</artifactId>      &lt;!&ndash; MySQL JDBC驱动 &ndash;&gt;-->
+<!--                <version>${mysql.connector.v}</version>         &lt;!&ndash; 版本号 &ndash;&gt;-->
+<!--                <optional>true</optional>                       &lt;!&ndash; 依赖是否可选 &ndash;&gt;-->
+<!--                <scope>runtime</scope>                          &lt;!&ndash; 作用域：运行时需要 &ndash;&gt;-->
+<!--            </dependency>-->
+            <!-- PostgreSQL -->
+            <dependency>
+                <groupId>org.postgresql</groupId>               <!-- PostgreSQL依赖库 -->
+                <artifactId>postgresql</artifactId>
+                <version>${psql.v}</version>                       <!-- 最新稳定版 -->
+                <scope>runtime</scope>
+            </dependency>
+            <!-- MyBatis test核心依赖 -->
+<!--            <dependency>-->
+<!--                <groupId>org.mybatis.spring.boot</groupId>-->
+<!--                <artifactId>mybatis-spring-boot-starter-test</artifactId>-->
+<!--                <version>${mybatis.v}</version>-->
+<!--                <scope>test</scope>-->
+<!--            </dependency>-->
+            <!-- MyBatis核心依赖 -->
+            <dependency>
+                <groupId>org.mybatis.spring.boot</groupId>
+                <artifactId>mybatis-spring-boot-starter</artifactId>
+                <version>${mybatis.v}</version>
+            </dependency>
+            <!-- MyBatis Plus -->
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-boot-starter</artifactId>
+                <version>${mybatis-plus.v}</version>           <!-- 版本号 已修正: 3.5.10.1 -->
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.mybatis</groupId>
+                        <artifactId>mybatis-spring</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <!-- MyBatis Plus注解 -->
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-annotation</artifactId>
+                <version>${mybatis-plus.v}</version>           <!-- 版本号 已修正: 3.5.10.1 -->
+            </dependency>
+            <!-- MyBatis Plus JSQLParser -->
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-extension</artifactId>
+                <version>${mybatis-plus.v}</version>
+                <scope>compile</scope>
+            </dependency>
+
+            <!-- ============ 安全与认证 ============ -->
+            <!-- JWT Token支持 -->
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>              <!-- JJWT组织 -->
+                <artifactId>jjwt-api</artifactId>               <!-- 已修正: 使用jjwt-api -->
+                <version>${jjwt.v}</version>                    <!-- 版本号 已修正: 0.11.5 -->
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-impl</artifactId>              <!-- 已修正: 添加jjwt-impl -->
+                <version>${jjwt.v}</version>
+                <scope>runtime</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-jackson</artifactId>           <!-- 已修正: 添加jjwt-jackson -->
+                <version>${jjwt.v}</version>
+                <scope>runtime</scope>
+            </dependency>
+
+            <!-- ============ 云存储依赖 ============ -->
+            <!-- 阿里云OSS -->
+            <dependency>
+                <groupId>com.aliyun.oss</groupId>               <!-- 阿里云组织 -->
+                <artifactId>aliyun-sdk-oss</artifactId>
+                <version>${aliyun.oss.v}</version>              <!-- OSS SDK版本 -->
+            </dependency>
+
+            <!-- ============ 开发工具依赖 ============ -->
+            <!-- Lombok代码生成工具 -->
+            <dependency>
+                <groupId>org.projectlombok</groupId>            <!-- Lombok组织 -->
+                <artifactId>lombok</artifactId>
+                <version>${lombok.v}</version>                  <!-- Lombok版本 -->
+                <optional>true</optional>                       <!-- 可选依赖，不会传递 -->
+            </dependency>
+            <!-- Apache Commons Lang3 -->
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>${commons-lang3.v}</version> <!-- 使用统一版本 -->
+            </dependency>
+            <!-- Jackson -->
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${jackson.v}</version> <!-- 使用统一版本 -->
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-annotations</artifactId>
+                <version>${jackson.v}</version> <!-- 使用统一版本 -->
+            </dependency>
+
+            <!-- ============ API文档依赖 ============ -->
+            <!-- Knife4j API文档 -->
+            <dependency>
+                <groupId>com.github.xiaoymin</groupId>          <!-- Knife4j组织 -->
+                <artifactId>knife4j-openapi3-jakarta-spring-boot-starter</artifactId>
+                <version>${knife4j.v}</version>                 <!-- Knife4j版本 -->
+            </dependency>
+
+            <!-- ============ 其他工具依赖 ============ -->
+            <!-- Hutool工具包 -->
+            <dependency>
+                <groupId>cn.hutool</groupId>                    <!-- Hutool组织 -->
+                <artifactId>hutool-all</artifactId>
+                <version>${hutool.v}</version>                  <!-- Hutool版本 -->
+            </dependency>
+            <!-- 邮箱配置 -->
+            <dependency>
+                <groupId>com.sun.mail</groupId>
+                <artifactId>jakarta.mail</artifactId>
+                <version>${jmail.v}</version>
+            </dependency>
+            <!-- 二维码生成 -->
+            <dependency>
+                <groupId>com.google.zxing</groupId>             <!-- ZXing组织 -->
+                <artifactId>core</artifactId>
+                <version>${zxing.v}</version>                   <!-- 二维码核心库 -->
+            </dependency>
+            <dependency>
+                <groupId>com.google.zxing</groupId>
+                <artifactId>javase</artifactId>
+                <version>${zxing.v}</version>                   <!-- 二维码JavaSE支持 -->
+            </dependency>
+            <dependency>
+                <groupId>org.apache.pdfbox</groupId>
+                <artifactId>pdfbox</artifactId>
+                <version>${pdfbox.v}</version>
+            </dependency>
+
+            <!-- ============ 测试相关依赖 ============ -->
+            <!-- JUnit测试框架 -->
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>            <!-- JUnit组织 -->
+                <artifactId>junit-jupiter</artifactId>
+                <version>${junit.v}</version>                   <!-- JUnit版本 -->
+                <scope>test</scope>                             <!-- 测试作用域 -->
+            </dependency>
+            <!-- Mockito模拟测试 -->
+            <dependency>
+                <groupId>org.mockito</groupId>                  <!-- Mockito组织 -->
+                <artifactId>mockito-core</artifactId>
+                <version>${mockito.v}</version>                 <!-- Mockito版本 -->
+                <scope>test</scope>                             <!-- 测试作用域 -->
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <!-- 七. 构建配置 -->
+    <build>
+        <!-- 插件管理：统一管理插件版本 -->
+        <pluginManagement>
+            <plugins>
+                <!-- Maven编译插件 -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId> <!-- Maven官方插件 -->
+                    <artifactId>maven-compiler-plugin</artifactId> <!-- 编译插件 -->
+                    <version>3.11.0</version>                   <!-- 插件版本 -->
+                    <configuration>
+                        <source>17</source>                     <!-- 源码兼容版本 -->
+                        <target>17</target>                     <!-- 目标字节码版本 -->
+                        <!-- 注解处理器路径 -->
+                        <annotationProcessorPaths>
+                            <path>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                                <version>${lombok.v}</version> <!-- Lombok注解处理器 -->
+                            </path>
+                        </annotationProcessorPaths>
+                    </configuration>
+                </plugin>
+
+                <!-- Spring Boot Maven插件 -->
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>         <!-- Spring Boot组织 -->
+                    <artifactId>spring-boot-maven-plugin</artifactId>   <!-- Spring Boot打包插件 -->
+                    <version>${spring-boot.version}</version>           <!-- 版本号 已修正: 统一使用3.5.7 -->
+                    <configuration>
+                        <!-- 排除不打进包的依赖 -->
+                        <excludes>
+                            <exclude>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>         <!-- 排除Lombok，因为只是编译时需要 -->
+                            </exclude>
+                        </excludes>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+    <!-- 八. 描述信息 -->
+    <!--    <url>https://github.com/</url>-->
+    <licenses>
+        <license>
+            <name>Apache License 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+    <developers>
+        <developer>
+            <name>虹初</name>
+            <email>2772167017@qq.com</email>
+            <organization>hongchuwudi</organization>
+            <organizationUrl>https://bgithub.xyz/hongchuwudi</organizationUrl>
+        </developer>
+    </developers>
+</project>

@@ -1,0 +1,491 @@
+package com.hongchu.ltservice.service.impl;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.hongchu.ltcommon.constant.WsEvent;
+import com.hongchu.ltcommon.context.BaseContext;
+import com.hongchu.ltcommon.exception.BusinessException;
+import com.hongchu.ltcommon.result.PageR;
+import com.hongchu.ltpojo.dto.teacher.homework.HomeworkCreateDTO;
+import com.hongchu.ltpojo.dto.teacher.homework.HomeworkGradeDTO;
+import com.hongchu.ltpojo.dto.teacher.homework.HomeworkPageDTO;
+import com.hongchu.ltpojo.entity.*;
+import com.hongchu.ltpojo.vo.teacher.homework.HomeworkDetailVO;
+import com.hongchu.ltpojo.vo.teacher.homework.HomeworkStatVO;
+import com.hongchu.ltpojo.vo.teacher.homework.HomeworkStatsVO;
+import com.hongchu.ltservice.mapper.*;
+import com.hongchu.ltservice.service.interfaces.IHomeworkService;
+import com.hongchu.ltservice.websocket.WebSocketUtil;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+
+/**
+ * <p>
+ * 作业信息表 服务实现类
+ * </p>
+ *
+ * @author hongchu
+ * @since 2025-12-20
+ */
+@Service
+@Slf4j
+@RequiredArgsConstructor
+public class HomeworkServiceImpl extends ServiceImpl<HomeworkMapper, Homework> implements IHomeworkService {
+    private final CoursesMapper         coursesMapper;
+    private final HomeworkRecordsMapper homeworkRecordsMapper;
+    private final UsersMapper           usersMapper;
+    private final StudentCoursesMapper  studentCoursesMapper;
+    // 发布作业
+    @Override
+    @Transactional
+    public void create(HomeworkCreateDTO dto) {
+        // 1. 查询身份
+        Long teacherId = BaseContext.getCurrentId();
+        if (!BaseContext.isTeacher()) throw new BusinessException("非教师无法发布作业");
+
+        // 2. 验证课程是否属于该教师
+        Courses course = coursesMapper.selectById(dto.getCourseId());
+        if (course == null) throw new BusinessException("课程不存在");
+        if (!course.getTeacherId().equals(teacherId)) throw new BusinessException("只能为自己授课的课程发布作业");
+
+        // 3.验证时间有效性
+        if (dto.getStartTime().isAfter(dto.getEndTime())) throw new BusinessException("开始时间不能晚于结束时间");
+
+        // 4. 创建作业
+        Homework homework = new Homework();
+        BeanUtils.copyProperties(dto, homework);
+        homework.setStatus(1);  // 进行中 默认为1开启状态
+        homework.setCreatedAt(LocalDateTime.now());
+        homework.setUpdatedAt(LocalDateTime.now());
+        if (!save(homework)) throw new BusinessException("发布作业失败");
+        log.info("教师 {} 发布作业成功，作业ID: {}", teacherId, homework.getId());
+
+        // 5.通知学生
+        List<StudentCourses> list = studentCoursesMapper.selectList(
+                new LambdaQueryWrapper<StudentCourses>()
+                        .eq(StudentCourses::getCourseId, course.getId())
+        );
+        WebSocketUtil.notifyByStuCourses(list, WsEvent.HOMEWORK_NEW);
+    }
+
+    // 查看作业详情
+    @Override
+    public HomeworkDetailVO getDetailById(Long id) {
+        Homework homework = baseMapper.selectById(id);
+        if (homework == null) throw new BusinessException("作业不存在");
+
+        // 权限验证：教师只能查看自己课程的作业
+        if (BaseContext.isTeacher()) {
+            Courses course = coursesMapper.selectById(homework.getCourseId());
+            Long teacherId = BaseContext.getCurrentId();
+            if (course == null || !course.getTeacherId().equals(teacherId))
+                throw new BusinessException("只能查看自己课程的作业");
+        }
+
+        // 查询课程信息
+        Courses course = coursesMapper.selectById(homework.getCourseId());
+
+        // 查询作业提交记录
+        LambdaQueryWrapper<HomeworkRecords> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(HomeworkRecords::getHomeworkId, id);
+        wrapper.orderByDesc(HomeworkRecords::getSubmissionTime);
+        List<HomeworkRecords> records = homeworkRecordsMapper.selectList(wrapper);
+
+        // 转换为VO
+        HomeworkDetailVO vo = new HomeworkDetailVO();
+        BeanUtils.copyProperties(homework, vo);
+        vo.setHomeworkId(id);
+        if (course != null)
+            vo.setCourseName(course.getCourseName());
+
+        // 转换记录列表
+        List<HomeworkDetailVO.HomeworkRecordVO> recordVOs = records.stream().map(record -> {
+            HomeworkDetailVO.HomeworkRecordVO recordVO = new HomeworkDetailVO.HomeworkRecordVO();
+            BeanUtils.copyProperties(record, recordVO);
+
+            // 查询学生信息
+             Users student = usersMapper.selectById(record.getStudentId());
+             if (student != null) {
+                 recordVO.setStudentName(student.getRealName());
+                 recordVO.setStudentNumber(student.getUserId());
+             }
+
+            // 查询批改教师信息
+             if (record.getCheckBy() != null) {
+                 Users teacher = usersMapper.selectById(record.getCheckBy());
+                 if (teacher != null) recordVO.setCheckByName(teacher.getRealName());
+             }
+
+            return recordVO;
+        }).collect(Collectors.toList());
+
+        vo.setRecords(recordVOs);
+        return vo;
+    }
+
+    // 分页条件查教师自己发布的作业信息
+    @Override
+    public PageR<Homework> getPage(HomeworkPageDTO dto) {
+        if (!BaseContext.isTeacher()) throw new BusinessException("只有教师可以查看作业列表");
+        Long teacherId = BaseContext.getCurrentId();
+
+        // 先查询该教师的所有课程ID
+        LambdaQueryWrapper<Courses> courseWrapper = new LambdaQueryWrapper<>();
+        courseWrapper.eq(Courses::getTeacherId, teacherId);
+        List<Courses> teacherCourses = coursesMapper.selectList(courseWrapper);
+        List<Long> courseIds = teacherCourses.stream().map(Courses::getId).collect(Collectors.toList());
+        if (courseIds.isEmpty()) {
+            PageR<Homework> emptyPage = new PageR<>();
+            emptyPage.setTotal(0L);
+            emptyPage.setRecords(Collections.emptyList());
+            return emptyPage;
+        }
+
+        // 构建作业查询条件
+        LambdaQueryWrapper<Homework> wrapper = new LambdaQueryWrapper<>();
+        wrapper.in(Homework::getCourseId, courseIds);
+        if (dto.getCourseId() != null) wrapper.eq(Homework::getCourseId, dto.getCourseId());
+        if (StringUtils.hasText(dto.getTitle())) wrapper.like(Homework::getTitle, dto.getTitle());
+        if (dto.getHomeworkStatus() != null) wrapper.eq(Homework::getStatus, dto.getHomeworkStatus());
+        wrapper.orderByDesc(Homework::getCreatedAt);
+
+        // 分页查询
+        Page<Homework> page = new Page<>(dto.getPage(), dto.getSize());
+        Page<Homework> result = page(page, wrapper);
+
+        // 转换为PageR
+        PageR<Homework> pageR = new PageR<>();
+        pageR.setTotal(result.getTotal());
+        pageR.setPages(result.getPages());
+        pageR.setCurrent(result.getCurrent());
+        pageR.setSize(result.getSize());
+        pageR.setRecords(result.getRecords());
+        return pageR;
+    }
+
+    // 老师给学生的提交记录打分
+    @Override
+    @Transactional
+    public void grade(HomeworkGradeDTO dto) {
+        // 1.校验身份
+        if (!BaseContext.isTeacher()) throw new BusinessException("只有教师可以批改作业");
+        Long teacherId = BaseContext.getCurrentId();
+
+        // 2.查询作业记录
+        HomeworkRecords record = homeworkRecordsMapper.selectById(dto.getHomeworkRecordId());
+        if (record == null) throw new BusinessException("作业记录不存在");
+
+        // 3.验证权限：通过作业->课程->教师
+        Homework homework = baseMapper.selectById(record.getHomeworkId());
+        if (homework == null) throw new BusinessException("作业不存在");
+        Courses course = coursesMapper.selectById(homework.getCourseId());
+        if (course == null || !course.getTeacherId().equals(teacherId))
+            throw new BusinessException("只能批改自己课程的作业");
+
+        // 4.验证分数有效性
+        if (dto.getScore().compareTo(homework.getTotalScore()) > 0)
+            throw new BusinessException("评分不能超过作业总分" + homework.getTotalScore());
+
+        // 5.更新作业记录
+        record.setScore(dto.getScore());
+        record.setCheckFeedback(dto.getFeedback());
+        record.setCheckBy(teacherId);
+        record.setCheckAt(LocalDateTime.now());
+        int rows = homeworkRecordsMapper.updateById(record);
+        if (rows == 0) throw new BusinessException("批改作业失败");
+        log.info("教师 {} 批改作业记录 {} 成功，作业ID: {}, 学生ID: {}, 评分: {}",
+                teacherId, dto.getHomeworkRecordId(), record.getHomeworkId(), record.getStudentId(), dto.getScore());
+
+        // 6.通知学生
+        List<StudentCourses> list = studentCoursesMapper.selectList(
+                new LambdaQueryWrapper<StudentCourses>()
+                        .eq(StudentCourses::getCourseId, course.getId())
+        );
+        WebSocketUtil.notifyByStuCourses(list, WsEvent.HOMEWORK_COMMENT_GRADED);
+    }
+
+    // 级联删除作业和作业记录
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void delete(Long id) {
+        // 1.查询当前用户权限
+        if (!BaseContext.isTeacher()) throw new BusinessException("只有教师可以删除作业");
+        Long teacherId = BaseContext.getCurrentId();
+
+        // 2.查询作业
+        Homework homework = baseMapper.selectById(id);
+        if (homework == null) throw new BusinessException("作业不存在");
+
+        // 3.验证权限：通过课程验证教师
+        Courses course = coursesMapper.selectById(homework.getCourseId());
+        if (course == null || !course.getTeacherId().equals(teacherId))
+            throw new BusinessException("只能删除自己课程的作业");
+
+        // 4.先查询有多少条提交记录（用于日志）
+        LambdaQueryWrapper<HomeworkRecords> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(HomeworkRecords::getHomeworkId, id);
+        long recordCount = homeworkRecordsMapper.selectCount(wrapper);
+
+        log.info("准备删除作业 {}，该作业有 {} 条提交记录", id, recordCount);
+
+        // 5.先删除所有作业提交记录
+        if (recordCount > 0) {
+            int deletedCount = homeworkRecordsMapper.delete(wrapper);
+            log.debug("已删除 {} 条作业提交记录", deletedCount);
+        }
+
+        // 6.再删除作业本体
+        int result = baseMapper.deleteById(id);
+        if (result <= 0)
+            throw new BusinessException("删除作业失败");
+
+        log.info("教师 {} 删除作业 {} 成功，同时删除了 {} 条提交记录",
+                teacherId, id, recordCount);
+    }
+
+    // 教师端作业统计数据（简化版）
+    @Override
+    public HomeworkStatsVO getStatistics(Long courseId) {
+        Long teacherId = BaseContext.getCurrentId();
+        if (!BaseContext.isTeacher())
+            throw new BusinessException("只有教师可以查看作业统计");
+
+        // 1. 查询该教师的课程
+        LambdaQueryWrapper<Courses> courseWrapper = new LambdaQueryWrapper<>();
+        courseWrapper.eq(Courses::getTeacherId, teacherId);
+        if (courseId != null) {
+            courseWrapper.eq(Courses::getId, courseId);
+        }
+        List<Courses> courses = coursesMapper.selectList(courseWrapper);
+
+        if (courses.isEmpty()) {
+            return buildEmptySimpleStat(courseId);
+        }
+
+        // 2. 获取课程ID列表
+        List<Long> courseIds = courses.stream()
+                .map(Courses::getId)
+                .collect(Collectors.toList());
+
+        // 3. 查询发布的作业
+        LambdaQueryWrapper<Homework> homeworkWrapper = new LambdaQueryWrapper<>();
+        homeworkWrapper.in(Homework::getCourseId, courseIds);
+        List<Homework> homeworks = baseMapper.selectList(homeworkWrapper);
+
+        // 4. 获取作业ID列表
+        List<Long> homeworkIds = homeworks.stream()
+                .map(Homework::getId)
+                .collect(Collectors.toList());
+
+        // 5. 查询所有作业提交记录
+        List<HomeworkRecords> allRecords = Collections.emptyList();
+        if (!homeworkIds.isEmpty()) {
+            LambdaQueryWrapper<HomeworkRecords> recordWrapper = new LambdaQueryWrapper<>();
+            recordWrapper.in(HomeworkRecords::getHomeworkId, homeworkIds);
+            allRecords = homeworkRecordsMapper.selectList(recordWrapper);
+        }
+
+        // 6. 构建简化的统计VO
+        return buildSimpleStatVO(courses, homeworks, allRecords, courseId);
+    }
+
+    private HomeworkStatsVO buildEmptySimpleStat(Long courseId) {
+        HomeworkStatsVO stat = new HomeworkStatsVO();
+        if (courseId != null) {
+            stat.setCourseId(courseId);
+            stat.setCourseName("暂无课程信息");
+        }
+        stat.setHomeworkCount(0);
+        stat.setTotalSubmitCount(0);
+        stat.setSubmitRate(BigDecimal.ZERO);
+        stat.setGradedCount(0);
+        stat.setGradingRate(BigDecimal.ZERO);
+        stat.setAvgScore(BigDecimal.ZERO);
+        stat.setPassRate(BigDecimal.ZERO);
+        stat.setSubmitPieChart(Collections.emptyList());
+        stat.setGradePieChart(Collections.emptyList());
+        return stat;
+    }
+
+    private HomeworkStatsVO buildSimpleStatVO(List<Courses> courses, List<Homework> homeworks,
+                                                   List<HomeworkRecords> records, Long specificCourseId) {
+        HomeworkStatsVO stat = new HomeworkStatsVO();
+
+        // 设置课程信息
+        if (specificCourseId != null) {
+            // 查询指定课程
+            stat.setCourseId(specificCourseId);
+            courses.stream()
+                    .filter(c -> c.getId().equals(specificCourseId))
+                    .findFirst()
+                    .ifPresent(course -> stat.setCourseName(course.getCourseName()));
+        } else if (!courses.isEmpty()) {
+            // 如果查询所有课程，显示第一个课程信息
+            stat.setCourseId(courses.get(0).getId());
+            stat.setCourseName(courses.get(0).getCourseName());
+            if (courses.size() > 1) {
+                stat.setCourseName(stat.getCourseName() + " 等" + courses.size() + "门课程");
+            }
+        }
+
+        // 基础统计
+        int homeworkCount = homeworks.size();
+        int totalSubmitCount = records.size();
+
+        stat.setHomeworkCount(homeworkCount);
+        stat.setTotalSubmitCount(totalSubmitCount);
+
+        // 统计已批改数量和分数
+        int gradedCount = 0;
+        BigDecimal totalScore = BigDecimal.ZERO;
+        int passCount = 0;
+
+        for (HomeworkRecords record : records) {
+            if (record.getScore() != null) {
+                gradedCount++;
+                totalScore = totalScore.add(record.getScore());
+
+                // 假设60分为及格线
+                if (record.getScore().compareTo(new BigDecimal("60")) >= 0) {
+                    passCount++;
+                }
+            }
+        }
+
+        stat.setGradedCount(gradedCount);
+
+        // 计算各种比率
+        // 提交率（简化：直接使用提交记录数占作业数的比例）
+        if (homeworkCount > 0) {
+            BigDecimal submitRate = new BigDecimal(totalSubmitCount)
+                    .divide(new BigDecimal(homeworkCount), 2, RoundingMode.HALF_UP)
+                    .multiply(new BigDecimal("100"));
+            stat.setSubmitRate(submitRate);
+        } else {
+            stat.setSubmitRate(BigDecimal.ZERO);
+        }
+
+        // 批改率
+        if (totalSubmitCount > 0) {
+            BigDecimal gradingRate = new BigDecimal(gradedCount)
+                    .divide(new BigDecimal(totalSubmitCount), 2, RoundingMode.HALF_UP)
+                    .multiply(new BigDecimal("100"));
+            stat.setGradingRate(gradingRate);
+        } else {
+            stat.setGradingRate(BigDecimal.ZERO);
+        }
+
+        // 平均分
+        if (gradedCount > 0) {
+            BigDecimal avgScore = totalScore.divide(new BigDecimal(gradedCount), 2, RoundingMode.HALF_UP);
+            stat.setAvgScore(avgScore);
+        } else {
+            stat.setAvgScore(BigDecimal.ZERO);
+        }
+
+        // 及格率
+        if (gradedCount > 0) {
+            BigDecimal passRate = new BigDecimal(passCount)
+                    .divide(new BigDecimal(gradedCount), 2, RoundingMode.HALF_UP)
+                    .multiply(new BigDecimal("100"));
+            stat.setPassRate(passRate);
+        } else {
+            stat.setPassRate(BigDecimal.ZERO);
+        }
+
+        // 构建饼图数据
+        stat.setSubmitPieChart(buildSubmitPieChart(records, homeworks));
+        stat.setGradePieChart(buildGradePieChart(records));
+
+        return stat;
+    }
+
+    private List<HomeworkStatsVO.PieItem> buildSubmitPieChart(List<HomeworkRecords> records, List<Homework> homeworks) {
+        List<HomeworkStatsVO.PieItem> pieItems = new ArrayList<>();
+
+        // 统计按时提交、迟交、未提交
+        int onTimeCount = 0;
+        int lateCount = 0;
+        int notSubmitted = 0;
+
+        // 这里需要关联作业的截止时间来判断是否迟交
+        // 由于逻辑复杂，这里简化处理：
+        // 假设所有提交都是按时提交
+        onTimeCount = records.size();
+
+        // 注意：这里需要更精确的逻辑来判断迟交
+        // 实际应用中应该遍历每条记录，对比 submissionTime 和 homework.endTime
+
+        int total = onTimeCount + lateCount + notSubmitted;
+
+        if (onTimeCount > 0) {
+            BigDecimal rate = new BigDecimal(onTimeCount)
+                    .divide(new BigDecimal(total), 2, RoundingMode.HALF_UP)
+                    .multiply(new BigDecimal("100"));
+            pieItems.add(new HomeworkStatsVO.PieItem("按时提交", onTimeCount, rate));
+        }
+
+        if (lateCount > 0) {
+            BigDecimal rate = new BigDecimal(lateCount)
+                    .divide(new BigDecimal(total), 2, RoundingMode.HALF_UP)
+                    .multiply(new BigDecimal("100"));
+            pieItems.add(new HomeworkStatsVO.PieItem("迟交", lateCount, rate));
+        }
+
+        if (notSubmitted > 0) {
+            BigDecimal rate = new BigDecimal(notSubmitted)
+                    .divide(new BigDecimal(total), 2, RoundingMode.HALF_UP)
+                    .multiply(new BigDecimal("100"));
+            pieItems.add(new HomeworkStatsVO.PieItem("未提交", notSubmitted, rate));
+        }
+
+        return pieItems;
+    }
+
+    private List<HomeworkStatsVO.PieItem> buildGradePieChart(List<HomeworkRecords> records) {
+        List<HomeworkStatsVO.PieItem> pieItems = new ArrayList<>();
+
+        // 统计已批改和未批改
+        int gradedCount = 0;
+        int ungradedCount = 0;
+
+        for (HomeworkRecords record : records) {
+            if (record.getScore() != null) {
+                gradedCount++;
+            } else {
+                ungradedCount++;
+            }
+        }
+
+        int total = gradedCount + ungradedCount;
+
+        if (gradedCount > 0) {
+            BigDecimal rate = new BigDecimal(gradedCount)
+                    .divide(new BigDecimal(total), 2, RoundingMode.HALF_UP)
+                    .multiply(new BigDecimal("100"));
+            pieItems.add(new HomeworkStatsVO.PieItem("已批改", gradedCount, rate));
+        }
+
+        if (ungradedCount > 0) {
+            BigDecimal rate = new BigDecimal(ungradedCount)
+                    .divide(new BigDecimal(total), 2, RoundingMode.HALF_UP)
+                    .multiply(new BigDecimal("100"));
+            pieItems.add(new HomeworkStatsVO.PieItem("未批改", ungradedCount, rate));
+        }
+
+        return pieItems;
+    }
+}

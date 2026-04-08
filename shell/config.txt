@@ -1,0 +1,16 @@
+# ===========================================
+# Flutter 环境配置文件
+# ===========================================
+# 格式: 模式名称|API URL|WebSocket URL|描述
+# ===========================================
+
+# Web开发模式 - 使用localhost
+dev-w|http://127.0.0.1:15555|ws://127.0.0.1:15555|Web开发模式(localhost)
+# Android开发模式 - 使用10.0.2.2(Android模拟器专用)
+dev-a|http://10.0.2.2:15555|ws://10.0.2.2:15555|Android开发模式(模拟器)
+# 生产环境 - HTTP
+prod|http://your-api-domain.com|ws://your-api-domain.com|生产环境(HTTP)
+# 生产环境 - HTTPS
+prods|https://your-api-domain.com|wss://your-api-domain.com|生产环境(HTTPS)
+# 测试环境
+test|http://test-api-domain.com|ws://test-api-domain.com|测试环境

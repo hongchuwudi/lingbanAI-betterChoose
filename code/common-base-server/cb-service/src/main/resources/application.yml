@@ -1,0 +1,163 @@
+# Tomcat 服务器配置
+server:
+  port: 15555
+
+# spring配置
+spring:
+  # 基础配置
+  application:
+    name: 关爱老年人
+  # 软件环境-配置文件选择
+  profiles:
+    active: dev # dev为开发模式
+  # mvc 配置
+  mvc:
+    static-path-pattern: /**
+  # spring主配置
+  main:
+    allow-circular-references: true # 允许循环依赖
+  # 时间配置
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+  # 数据库jdbc配置
+  datasource:
+    driver-class-name: ${hcprop.datasource.driver-class-name}
+    # 将 MySQL 连接字符串改为 PostgreSQL
+    url: jdbc:postgresql://${hcprop.datasource.host}:${hcprop.datasource.port}/${hcprop.datasource.db}?currentSchema=public&TimeZone=Asia/Shanghai
+    username: ${hcprop.datasource.username}
+    password: ${hcprop.datasource.password}
+  # redis配置
+  data:
+    redis:
+      host: ${hcprop.redis.host}               # 主机地址
+      port: ${hcprop.redis.port}               # 端口
+      password: ${hcprop.redis.password}       # 密码
+      database: ${hcprop.redis.db}             # 数据库
+      timeout: 30000                          # 超时重连
+  # rabbitmq配置
+  rabbitmq:
+    host: ${hcprop.rabbitmq.host}              # 主机地址
+    port: ${hcprop.rabbitmq.port}              # 端口
+    username: ${hcprop.rabbitmq.username}      # 用户名
+    password: ${hcprop.rabbitmq.password}      # 密码
+    virtual-host: ${hcprop.rabbitmq.virtual-host}  # 虚拟主机
+    listener:
+      simple:
+        retry:
+          enabled: true                        # 开启重试
+          max-attempts: 3                      # 最大重试次数
+          initial-interval: 1000               # 初始重试间隔(ms)
+  # spring ai 配置
+  ai:
+    chat:
+      memory:
+        repository:
+          jdbc:
+            platform: postgresql
+            initialize-schema: always
+    # openai规范
+    openai:
+      base-url: ${hcprop.ai.openai.base-url}
+      api-key: ${hcprop.ai.openai.api-key}
+      chat:
+        options:
+          model: ${hcprop.ai.openai.chat.options.model}
+      embedding:
+        options:
+          model: ${hcprop.ai.openai.embedding.options.model}
+          dimensions: ${hcprop.ai.openai.embedding.options.dimensions}
+    # deepseek
+    deepseek:
+      # 基础连接配置
+      api-key: ${hcprop.ai.deepseek.api-key}        # 从环境变量读取 API Key
+      base-url: ${hcprop.ai.deepseek.base-url}        # API 基础 URL
+      # 聊天模型配置
+      chat:
+        enabled: true                     # 启用聊天模型
+        options:
+          model: deepseek-chat             # 默认模型
+          temperature: 0.7                 # 温度参数 (0.0-2.0)
+          max-tokens: 2000                 # 最大生成 token 数
+          top-p: 0.9                       # 核采样参数
+          frequency-penalty: 0.0           # 频率惩罚
+          presence-penalty: 0.0            # 存在惩罚
+          stop: [ "\n\n", "###" ]           # 停止序列
+    # dashscope
+    dashscope:
+      api-key: ${hcprop.ai.dashscope.api-key}
+  #服务器文件上传限制
+  servlet:
+    multipart:
+      max-file-size: 10MB  # 单个文件最大限制
+      max-request-size: 10MB  # 单次请求总大小限制
+      enabled: true  # 启用文件上传功能
+      file-size-threshold: 200MB  # 内存写入阈值
+      location: /tmp  # 临时文件存储路径
+  # 邮件
+  mail:
+    host: ${hcprop.mail.host}  # 以QQ邮箱为例
+    port: ${hcprop.mail.port}
+    username: ${hcprop.mail.username}  # 发件邮箱
+    password: ${hcprop.mail.password}  # 授权码，不是登录密码
+    protocol: smtp
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+
+# MyBatis-Plus 配置
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml                 # Mapper XML文件位置
+  type-aliases-package: com.hongchu.ltpojo.entity               # 实体类别名包路径
+  global-config:                                                # 全局配置
+    db-config:                                                  # 数据库配置
+      id-type: ASSIGN_ID                                        # ID生成策略：auto=数据库自增 ASSIGN_ID雪花算法
+      update-strategy: not_null                                 # 更新策略：not_null=只更新非null字段
+      table-underline: true                                     # 表名下划线启用 ✅ 这个存在
+      logic-delete-field: deleted                               # 逻辑删除字段名
+      logic-delete-value: 1                                     # 逻辑删除值（已删除）
+      logic-not-delete-value: 0                                 # 逻辑未删除值（未删除）
+  configuration:                                                # MyBatis原生配置
+    map-underscore-to-camel-case: true                          # 开启下划线转驼峰命名
+    cache-enabled: true                                         # 开启二级缓存
+    lazy-loading-enabled: true                                  # 开启延迟加载
+    multiple-result-sets-enabled: true                          # 支持多结果集
+
+# MyBatis配置
+mybatis:
+  mapper-locations: classpath*:mapper/**/*.xml                  # Mapper XML文件位置
+  type-aliases-package: com.hongchu.ltpojo.entity               # 实体类别名包路径
+  configuration:                                                # MyBatis原生配置
+    map-underscore-to-camel-case: true                          # 开启下划线转驼峰命名
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl       # 开启SQL日志（控制台输出）
+
+# 日志记录
+logging:
+  level:
+    com.hongchu: info
+    org.springframework.ai.chat.client.advisor: debug
+    org.springframework.ai: INFO
+    com.hongchu.ltservice.mapper: DEBUG
+
+# 阿里云oss配置
+aliyun-oss:
+  endpoint: ${hcprop.aliyun.oss.endpoint}
+  access-key-id: ${hcprop.aliyun.oss.access-key-id}
+  access-key-secret: ${hcprop.aliyun.oss.access-key-secret}
+  bucket-name: ${hcprop.aliyun.oss.bucket-name}
+  region: ${hcprop.aliyun.oss.region}
+
+#jwt 配置
+my-jwt:
+  secret: ${hcprop.jwt.secret}
+  expiration: ${hcprop.jwt.expiration}
+  refresh-token-expiration: ${hcprop.jwt.refresh-token-expiration}
+
+
+
+
+

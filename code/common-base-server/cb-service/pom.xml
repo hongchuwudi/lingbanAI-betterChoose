@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <!-- 一. Maven模型版本，固定值 -->
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- 二. 父项目：继承项目父POM -->
+    <parent>
+        <groupId>com.hongchu</groupId>          <!-- 组织ID -->
+        <artifactId>common-base</artifactId>       <!-- 父项目名称 -->
+        <version>0.0.1-SNAPSHOT</version>          <!-- 父项目版本 -->
+    </parent>
+
+    <!-- 三. 模块基本信息 -->
+    <artifactId>cb-service</artifactId>              <!-- 模块名称 -->
+    <name>Service Module</name>                      <!-- 模块显示名称 -->
+    <description>通用业务模块</description>             <!-- 模块描述 -->
+
+    <!-- 四. 依赖配置 -->
+    <dependencies>
+        <!-- ============ 内部模块依赖 ============ -->
+        <!-- 通用工具模块 -->
+        <dependency>
+            <groupId>com.hongchu</groupId>              <!-- 组织ID -->
+            <artifactId>cb-common</artifactId>          <!-- 通用工具模块 -->
+        </dependency>
+        <!-- 实体类模块 -->
+        <dependency>
+            <groupId>com.hongchu</groupId>             <!-- 组织ID -->
+            <artifactId>cb-pojo</artifactId>           <!-- 实体类模块 -->
+        </dependency>
+
+        <!-- ============ Spring Boot 核心依赖 ============ -->
+        <!-- Web应用核心依赖 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>        <!-- Spring Boot Web启动器 -->
+        </dependency>
+        <!-- AOP切面支持 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>        <!-- AOP支持 -->
+        </dependency>
+        <!-- WebSocket依赖 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-websocket</artifactId>
+        </dependency>
+
+        <!-- 如果需要STOMP支持（推荐） -->
+<!--        <dependency>-->
+<!--            <groupId>org.springframework.boot</groupId>-->
+<!--            <artifactId>spring-boot-starter-messaging</artifactId>-->
+<!--        </dependency>-->
+        <!-- security -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+        <!-- ========== Spring AI依赖管理 ========== -->
+        <!-- Spring AI openai配置 -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-starter-model-openai</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-starter-model-chat-memory-repository-jdbc</artifactId>
+        </dependency>
+        <!-- Spring AI DeepSeek Starter -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-starter-model-deepseek</artifactId>
+        </dependency>
+        <!-- Spring AI Alibaba Agent Framework -->
+<!--        <dependency>-->
+<!--            <groupId>com.alibaba.cloud.ai</groupId>-->
+<!--            <artifactId>spring-ai-alibaba-agent-framework</artifactId>-->
+<!--        </dependency>-->
+
+<!--        &lt;!&ndash; DashScope ChatModel 支持（如果使用其他模型，请跳转 Spring AI 文档选择对应的 starter） &ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>com.alibaba.cloud.ai</groupId>-->
+<!--            <artifactId>spring-ai-alibaba-starter-dashscope</artifactId>-->
+<!--        </dependency>-->
+
+        <!-- ============ 数据库相关依赖 ============ -->
+        <!-- MySQL数据库驱动 -->
+<!--        <dependency>-->
+<!--            <groupId>com.mysql</groupId>                    &lt;!&ndash; MySQL组织 &ndash;&gt;-->
+<!--            <artifactId>mysql-connector-j</artifactId>      &lt;!&ndash; MySQL JDBC驱动 &ndash;&gt;-->
+<!--            <scope>runtime</scope>                          &lt;!&ndash; 作用域：运行时需要 &ndash;&gt;-->
+<!--        </dependency>-->
+        <!-- PostgreSQL数据库驱动 -->
+        <dependency>
+            <groupId>org.postgresql</groupId>               <!-- PostgreSQL依赖库 -->
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <!-- Redis缓存支持 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId> <!-- Redis缓存 -->
+        </dependency>
+        <!-- RabbitMQ消息队列支持 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-amqp</artifactId> <!-- RabbitMQ -->
+        </dependency>
+        <!-- MyBatis Plus Boot Starter -->
+        <dependency>
+            <groupId>com.baomidou</groupId>                 <!-- MyBatis Plus组织 -->
+            <artifactId>mybatis-plus-boot-starter</artifactId> <!-- MyBatis Plus -->
+        </dependency>
+        <!-- MyBatis -->
+        <dependency>
+            <groupId>org.mybatis.spring.boot</groupId>
+            <artifactId>mybatis-spring-boot-starter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-annotation</artifactId>
+        </dependency>
+
+        <!-- ============ 开发工具依赖 ============ -->
+        <!-- Lombok代码生成工具 -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>            <!-- Lombok组织 -->
+            <artifactId>lombok</artifactId>                 <!-- Lombok工具 -->
+            <optional>true</optional>                       <!-- 可选依赖，不会传递 -->
+        </dependency>
+
+        <!-- 开发工具包 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>   <!-- 开发热部署工具 -->
+            <scope>runtime</scope>                          <!-- 运行时作用域 -->
+            <optional>true</optional>                       <!-- 可选依赖 -->
+        </dependency>
+
+        <!-- 配置处理器 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>                       <!-- 配置元数据生成 -->
+        </dependency>
+
+        <!-- ============ API文档依赖 ============ -->
+        <!-- Knife4j API文档 -->
+        <dependency>
+            <groupId>com.github.xiaoymin</groupId>          <!-- Knife4j组织 -->
+            <artifactId>knife4j-openapi3-jakarta-spring-boot-starter</artifactId>
+        </dependency>
+
+        <!-- ============ 邮件发送支持 ============ -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId> <!-- 邮件发送 -->
+        </dependency>
+
+        <!-- ============ 测试相关依赖 ============ -->
+        <!-- Spring Boot测试 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>                             <!-- 测试作用域 -->
+        </dependency>
+
+        <!-- Mockito模拟测试 -->
+        <dependency>
+            <groupId>org.mockito</groupId>                  <!-- Mockito组织 -->
+            <artifactId>mockito-core</artifactId>           <!-- Mockito测试 -->
+            <scope>test</scope>                             <!-- 测试作用域 -->
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- 邮箱配置 -->
+        <dependency>
+            <groupId>com.sun.mail</groupId>
+            <artifactId>jakarta.mail</artifactId>
+        </dependency>
+
+        <!-- Spring Boot WebFlux (包含WebClient) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
+        </dependency>
+
+        <!-- PDF处理 -->
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+    <!-- 五. 构建配置 -->
+    <build>
+        <plugins>
+            <!-- Maven编译插件 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId> <!-- Maven官方插件 -->
+                <artifactId>maven-compiler-plugin</artifactId> <!-- 编译插件 -->
+                <version>3.11.0</version>                   <!-- 插件版本 -->
+                <configuration>
+                    <source>17</source>                     <!-- 源码兼容版本 -->
+                    <target>17</target>                     <!-- 目标字节码版本 -->
+                    <!-- 注解处理器路径 -->
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.v}</version> <!-- Lombok注解处理器 -->
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+
+            <!-- Spring Boot Maven插件 -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <mainClass>com.hongchu.cbservice.ServiceApplication</mainClass> <!-- 主启动类 -->
+                    <!-- 排除不打进包的依赖 -->
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>         <!-- 排除Lombok，编译时使用 -->
+                        </exclude>
+                        <exclude>
+                            <groupId>org.springframework.boot</groupId>
+                            <artifactId>spring-boot-devtools</artifactId> <!-- 排除开发工具 -->
+                        </exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
