@@ -108,7 +108,7 @@ class HealthScreen extends StatelessWidget {
           context,
           icon: LucideIcons.activity,
           title: '运动记录',
-          color: const Color(0xFF42A5F5),
+          color: const Color(0xFF3498DB),
           isDark: isDark,
           onTap: () {},
         ),

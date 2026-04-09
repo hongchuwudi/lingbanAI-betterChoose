@@ -15,11 +15,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 
-/**
- * 健康解析控制器
- * 提供健康文档的解析接口
- * 包括健康文档的上传、解析、查询等功能
- */
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/ai")

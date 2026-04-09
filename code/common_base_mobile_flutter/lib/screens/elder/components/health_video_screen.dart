@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../models/health_video.dart';
 import '../../../services/health_service.dart';
-import 'video_player_screen.dart';
 
 class HealthVideoScreen extends StatefulWidget {
   const HealthVideoScreen({super.key});
@@ -11,11 +10,7 @@ class HealthVideoScreen extends StatefulWidget {
   State<HealthVideoScreen> createState() => _HealthVideoScreenState();
 }
 
-class _HealthVideoScreenState extends State<HealthVideoScreen>
-    with AutomaticKeepAliveClientMixin {
-  @override
-  bool get wantKeepAlive => true;
-
+class _HealthVideoScreenState extends State<HealthVideoScreen> {
   List<HealthVideo> _videos = [];
   bool _isLoading = true;
   int _currentPage = 1;
@@ -77,7 +72,6 @@ class _HealthVideoScreenState extends State<HealthVideoScreen>
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -134,20 +128,6 @@ class _HealthVideoScreenState extends State<HealthVideoScreen>
   }
 
   Widget _buildVideoCard(
-    HealthVideo video,
-    bool isDark,
-    ColorScheme colorScheme,
-  ) {
-    return GestureDetector(
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => VideoPlayerScreen(video: video)),
-      ),
-      child: _buildVideoCardContent(video, isDark, colorScheme),
-    );
-  }
-
-  Widget _buildVideoCardContent(
     HealthVideo video,
     bool isDark,
     ColorScheme colorScheme,

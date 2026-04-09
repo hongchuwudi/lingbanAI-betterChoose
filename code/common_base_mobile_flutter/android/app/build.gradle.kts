@@ -1,30 +1,13 @@
-// android/app/build.gradle.kts
-
 plugins {
     id("com.android.application")
     id("kotlin-android")
+    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
 
-import java.util.Properties
-
-val keystoreProperties = Properties()
-val keystorePropertiesFile = rootProject.file("key.properties")
-if (keystorePropertiesFile.exists()) {
-    keystoreProperties.load(keystorePropertiesFile.inputStream())
-}
-
-val localProperties = Properties()
-val localPropertiesFile = rootProject.file("local.properties")
-if (localPropertiesFile.exists()) {
-    localProperties.load(localPropertiesFile.inputStream())
-}
-
-val baiduMapApiKey = localProperties.getProperty("baidu.map.api.key", "YOUR_BAIDU_MAP_API_KEY")
-
 android {
-    namespace = "com.hongchu.lingbanai"
-    compileSdk = 36
+    namespace = "com.example.common_base_mobile_flutter"
+    compileSdk = flutter.compileSdkVersion
     ndkVersion = "28.2.13676358"
 
     compileOptions {
@@ -33,67 +16,27 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = "17"
+        jvmTarget = JavaVersion.VERSION_17.toString()
     }
 
     defaultConfig {
-        applicationId = "com.hongchu.lingbanai"
-        minSdk = 24
-        targetSdk = 36
-        versionCode = 1
-        versionName = "1.0.0"
-        
-        ndk {
-            abiFilters.add("arm64-v8a")
-        }
-    }
-
-    signingConfigs {
-        create("release") {
-            keyAlias = keystoreProperties.getProperty("keyAlias")
-            keyPassword = keystoreProperties.getProperty("keyPassword")
-            storeFile = file(keystoreProperties.getProperty("storeFile"))
-            storePassword = keystoreProperties.getProperty("storePassword")
-        }
+        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
+        applicationId = "com.example.common_base_mobile_flutter"
+        // You can update the following values to match your application needs.
+        // For more information, see: https://flutter.dev/to/review-gradle-config.
+        minSdk = flutter.minSdkVersion
+        targetSdk = flutter.targetSdkVersion
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
     }
 
     buildTypes {
-        debug {
-            manifestPlaceholders["baiduMapApiKey"] = baiduMapApiKey
-        }
         release {
-            signingConfig = signingConfigs.getByName("release")
-            manifestPlaceholders["baiduMapApiKey"] = baiduMapApiKey
-            
-            // ===== 开启混淆和资源压缩 =====
-            isMinifyEnabled = true
-            isShrinkResources = true
-            
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+            // TODO: Add your own signing config for the release build.
+            // Signing with the debug keys for now, so `flutter run --release` works.
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
-
-    packaging {
-        jniLibs {
-            pickFirsts.add("lib/armeabi-v7a/libBaiduMapSDK_base_v6_3_1.so")
-            pickFirsts.add("lib/arm64-v8a/libBaiduMapSDK_base_v6_3_1.so")
-            pickFirsts.add("lib/**/libc++_shared.so")
-        }
-    }
-}
-
-repositories {
-    maven { url = uri("https://mapapi.bdimg.com/repository/maven-releases/") }
-}
-
-dependencies {
-    implementation("com.baidu.lbsyun:BaiduMapSDK_Search:7.6.4")
-    implementation("com.baidu.lbsyun:BaiduMapSDK_Util:7.6.4")
-    implementation("com.baidu.lbsyun:BaiduMapSDK_Location_All:9.6.4")
-    implementation("com.baidu.lbsyun:BaiduMapSDK_Map:7.6.4")
 }
 
 flutter {

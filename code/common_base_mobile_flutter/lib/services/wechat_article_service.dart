@@ -7,21 +7,14 @@ class WechatArticleService {
     int page = 1,
     int size = 10,
   }) async {
-    final response =
-        await HttpInterceptorManager().interceptor.get<Map<String, dynamic>>(
-      path: '/wechat-article/list',
-      queryParameters: {'page': page, 'size': size},
-    );
+    final response = await HttpInterceptorManager().interceptor
+        .get<List<dynamic>>(
+          path: '/wechat-article/list',
+          queryParameters: {'page': page, 'size': size},
+        );
 
     if (response.isSuccess && response.data != null) {
-      final data = response.data!;
-      List<dynamic> records = [];
-
-      if (data.containsKey('records')) {
-        records = data['records'] as List<dynamic>;
-      }
-
-      final list = records
+      final list = response.data!
           .map((e) => WechatArticle.fromJson(e as Map<String, dynamic>))
           .toList();
       return ApiResponse<List<WechatArticle>>(

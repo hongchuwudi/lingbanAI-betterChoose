@@ -12,11 +12,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * 健康分析控制器
- * 提供健康数据的分析接口
- * 包括健康数据的解析、分析、查询等功能
- */
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/ai")

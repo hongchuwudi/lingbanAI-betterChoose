@@ -32,11 +32,11 @@ class AuthService {
 
   /// 根据昵称模糊查找用户信息
   static Future<Map<String, dynamic>> getUserInfoByNick(String nickname) async {
-    final response =
-        await HttpInterceptorManager().interceptor.get<Map<String, dynamic>>(
-      path: '/auth/info-nick',
-      queryParameters: {'nickname': nickname},
-    );
+    final response = await HttpInterceptorManager().interceptor
+        .get<Map<String, dynamic>>(
+          path: '/auth/info-nick',
+          queryParameters: {'nickname': nickname},
+        );
 
     return {
       'success': response.isSuccess,
@@ -47,11 +47,11 @@ class AuthService {
 
   /// 根据参数查找用户信息
   static Future<Map<String, dynamic>> getUserInfo(String param) async {
-    final response =
-        await HttpInterceptorManager().interceptor.get<Map<String, dynamic>>(
-      path: '/auth/info-un',
-      queryParameters: {'param': param},
-    );
+    final response = await HttpInterceptorManager().interceptor
+        .get<Map<String, dynamic>>(
+          path: '/auth/info-un',
+          queryParameters: {'param': param},
+        );
 
     return {
       'success': response.isSuccess,
@@ -98,11 +98,11 @@ class AuthService {
     String param,
     String password,
   ) async {
-    final response =
-        await HttpInterceptorManager().interceptor.post<Map<String, dynamic>>(
-      path: '/auth/login',
-      data: {'param': param, 'password': password},
-    );
+    final response = await HttpInterceptorManager().interceptor
+        .post<Map<String, dynamic>>(
+          path: '/auth/login',
+          data: {'param': param, 'password': password},
+        );
 
     if (response.isSuccess && response.data != null) {
       final user = User.fromJson(response.data!);
@@ -125,11 +125,11 @@ class AuthService {
     String email,
     String verifyCode,
   ) async {
-    final response =
-        await HttpInterceptorManager().interceptor.post<Map<String, dynamic>>(
-      path: '/auth/login-email',
-      data: {'email': email, 'verifyCode': verifyCode},
-    );
+    final response = await HttpInterceptorManager().interceptor
+        .post<Map<String, dynamic>>(
+          path: '/auth/login-email',
+          data: {'email': email, 'verifyCode': verifyCode},
+        );
 
     if (response.isSuccess && response.data != null) {
       await _saveUser(User.fromJson(response.data!));
@@ -149,11 +149,11 @@ class AuthService {
     String phone,
     String verifyCode,
   ) async {
-    final response =
-        await HttpInterceptorManager().interceptor.post<Map<String, dynamic>>(
-      path: '/auth/login-phone',
-      data: {'phone': phone, 'verifyCode': verifyCode},
-    );
+    final response = await HttpInterceptorManager().interceptor
+        .post<Map<String, dynamic>>(
+          path: '/auth/login-phone',
+          data: {'phone': phone, 'verifyCode': verifyCode},
+        );
 
     if (response.isSuccess && response.data != null) {
       await _saveUser(User.fromJson(response.data!));
@@ -203,11 +203,10 @@ class AuthService {
   }
 
   /// 发送邮箱验证码
-  static Future<Map<String, dynamic>> sendEmailCode(
-      String email, String type) async {
+  static Future<Map<String, dynamic>> sendEmailCode(String email) async {
     final response = await HttpInterceptorManager().interceptor.post<String>(
       path: '/auth/send-email-code',
-      data: {'email': email, 'type': type},
+      data: {'email': email},
     );
 
     return {
@@ -292,8 +291,8 @@ class AuthService {
   /// 注销用户
   static Future<Map<String, dynamic>> deleteUser(int id) async {
     final response = await HttpInterceptorManager().interceptor.delete<String>(
-          path: '/auth/$id',
-        );
+      path: '/auth/$id',
+    );
 
     return {
       'success': response.isSuccess,
@@ -305,12 +304,12 @@ class AuthService {
   static Future<Map<String, dynamic>> updateUserInfo(
     Map<String, dynamic> userData,
   ) async {
-    final response =
-        await HttpInterceptorManager().interceptor.put<Map<String, dynamic>>(
-      path: '/auth',
-      data: userData,
-      headers: {'Content-Type': 'application/json'},
-    );
+    final response = await HttpInterceptorManager().interceptor
+        .put<Map<String, dynamic>>(
+          path: '/auth',
+          data: userData,
+          headers: {'Content-Type': 'application/json'},
+        );
 
     final user = response.isSuccess && response.data != null
         ? User.fromJson(response.data!)
@@ -425,8 +424,7 @@ class AuthService {
   /// 调用后端接口 /auth/current 获取用户信息
   /// 包含 elderlyProfile 和 childProfile 信息
   static Future<Map<String, dynamic>> getCurrentUser() async {
-    final response = await HttpInterceptorManager()
-        .interceptor
+    final response = await HttpInterceptorManager().interceptor
         .get<Map<String, dynamic>>(path: '/auth/current');
 
     final user = response.isSuccess && response.data != null
@@ -460,12 +458,12 @@ class AuthService {
   static Future<Map<String, dynamic>> createElderlyProfile(
     Map<String, dynamic> profileData,
   ) async {
-    final response =
-        await HttpInterceptorManager().interceptor.post<Map<String, dynamic>>(
-      path: '/user/elderly-profile/add',
-      data: profileData,
-      headers: {'Content-Type': 'application/json'},
-    );
+    final response = await HttpInterceptorManager().interceptor
+        .post<Map<String, dynamic>>(
+          path: '/user/elderly-profile/add',
+          data: profileData,
+          headers: {'Content-Type': 'application/json'},
+        );
 
     if (response.isSuccess) {
       final userResponse = await getCurrentUser();
@@ -477,8 +475,7 @@ class AuthService {
 
   /// 获取当前用户的老人档案
   static Future<Map<String, dynamic>> getElderlyProfile() async {
-    final response = await HttpInterceptorManager()
-        .interceptor
+    final response = await HttpInterceptorManager().interceptor
         .get<Map<String, dynamic>>(path: '/user/elderly-profile/get');
 
     return {
@@ -492,12 +489,12 @@ class AuthService {
   static Future<Map<String, dynamic>> updateElderlyProfile(
     Map<String, dynamic> profileData,
   ) async {
-    final response =
-        await HttpInterceptorManager().interceptor.put<Map<String, dynamic>>(
-      path: '/user/elderly-profile/update',
-      data: profileData,
-      headers: {'Content-Type': 'application/json'},
-    );
+    final response = await HttpInterceptorManager().interceptor
+        .put<Map<String, dynamic>>(
+          path: '/user/elderly-profile/update',
+          data: profileData,
+          headers: {'Content-Type': 'application/json'},
+        );
 
     return {
       'success': response.isSuccess,
@@ -516,12 +513,12 @@ class AuthService {
   static Future<Map<String, dynamic>> createChildProfile(
     Map<String, dynamic> profileData,
   ) async {
-    final response =
-        await HttpInterceptorManager().interceptor.post<Map<String, dynamic>>(
-      path: '/user/child-profile/add',
-      data: profileData,
-      headers: {'Content-Type': 'application/json'},
-    );
+    final response = await HttpInterceptorManager().interceptor
+        .post<Map<String, dynamic>>(
+          path: '/user/child-profile/add',
+          data: profileData,
+          headers: {'Content-Type': 'application/json'},
+        );
 
     if (response.isSuccess) {
       final userResponse = await getCurrentUser();
@@ -533,8 +530,7 @@ class AuthService {
 
   /// 获取当前用户的所有关系
   static Future<Map<String, dynamic>> getMyRelations() async {
-    final response = await HttpInterceptorManager()
-        .interceptor
+    final response = await HttpInterceptorManager().interceptor
         .get<List<dynamic>>(path: '/user/family-binding/my-relations');
 
     return {
@@ -548,10 +544,10 @@ class AuthService {
   static Future<Map<String, dynamic>> getElderlyRelations(
     String elderlyProfileId,
   ) async {
-    final response =
-        await HttpInterceptorManager().interceptor.get<List<dynamic>>(
-              path: '/user/family-binding/elderly/$elderlyProfileId',
-            );
+    final response = await HttpInterceptorManager().interceptor
+        .get<List<dynamic>>(
+          path: '/user/family-binding/elderly/$elderlyProfileId',
+        );
 
     return {
       'success': response.isSuccess,
@@ -564,8 +560,7 @@ class AuthService {
   static Future<Map<String, dynamic>> getChildRelations(
     String childProfileId,
   ) async {
-    final response = await HttpInterceptorManager()
-        .interceptor
+    final response = await HttpInterceptorManager().interceptor
         .get<List<dynamic>>(path: '/user/family-binding/child/$childProfileId');
 
     return {
@@ -599,8 +594,8 @@ class AuthService {
   /// 删除家人关系
   static Future<Map<String, dynamic>> deleteBinding(String id) async {
     final response = await HttpInterceptorManager().interceptor.delete<String>(
-          path: '/user/family-binding/delete/$id',
-        );
+      path: '/user/family-binding/delete/$id',
+    );
 
     return {
       'success': response.isSuccess,
@@ -710,12 +705,12 @@ class AuthService {
       return {'success': false, 'message': '用户信息不存在'};
     }
 
-    final response =
-        await HttpInterceptorManager().interceptor.put<Map<String, dynamic>>(
-      path: '/auth',
-      data: {'id': currentUser.id, 'avatar': avatarUrl},
-      headers: {'Content-Type': 'application/json'},
-    );
+    final response = await HttpInterceptorManager().interceptor
+        .put<Map<String, dynamic>>(
+          path: '/auth',
+          data: {'id': currentUser.id, 'avatar': avatarUrl},
+          headers: {'Content-Type': 'application/json'},
+        );
 
     final user = response.isSuccess && response.data != null
         ? User.fromJson(response.data!)

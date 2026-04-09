@@ -67,10 +67,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               final relation = isElder
                   ? (binding.relationType ?? '家人')
                   : (binding.elderlyToChildRelation ??
-                      binding.relationType ??
-                      '家人');
-              final avatar =
-                  isElder ? binding.childAvatar : binding.elderlyAvatar;
+                        binding.relationType ??
+                        '家人');
+              final avatar = isElder
+                  ? binding.childAvatar
+                  : binding.elderlyAvatar;
               return FamilyMember(
                 name: name ?? '未知',
                 relation: relation,
@@ -156,30 +157,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildUserInfoCard(BuildContext context, User? user, bool isElder) {
     final colorScheme = Theme.of(context).colorScheme;
-    final defaultAvatar =
-        isElder ? 'assets/choose_oldMans.jpeg' : 'assets/choose_youths.jpeg';
+    final defaultAvatar = isElder
+        ? 'assets/choose_oldMans.jpeg'
+        : 'assets/choose_youths.jpeg';
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            colorScheme.primaryContainer.withValues(alpha: 0.3),
-            colorScheme.surface,
-          ],
-        ),
+        color: colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: colorScheme.primary.withValues(alpha: 0.1),
-          width: 1,
-        ),
         boxShadow: [
           BoxShadow(
-            color: colorScheme.primary.withValues(alpha: 0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            color: colorScheme.shadow.withValues(alpha: 0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -205,19 +196,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                         )
                       : user?.avatar != null && user!.avatar!.isNotEmpty
-                          ? ClipOval(
-                              child: Image.network(
-                                user.avatar!,
+                      ? ClipOval(
+                          child: Image.network(
+                            user.avatar!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Image.asset(
+                                defaultAvatar,
                                 fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Image.asset(
-                                    defaultAvatar,
-                                    fit: BoxFit.cover,
-                                  );
-                                },
-                              ),
-                            )
-                          : Image.asset(defaultAvatar, fit: BoxFit.cover),
+                              );
+                            },
+                          ),
+                        )
+                      : Image.asset(defaultAvatar, fit: BoxFit.cover),
                 ),
                 Positioned(
                   right: 0,
@@ -318,19 +309,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            colorScheme.tertiaryContainer.withValues(alpha: 0.3),
-            colorScheme.surface,
-          ],
-        ),
+        color: colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: colorScheme.tertiary.withValues(alpha: 0.1),
-          width: 1,
-        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -379,68 +359,67 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 )
               : familyMembers.isEmpty
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Text(
-                          '暂无家人',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: colorScheme.onSurfaceVariant,
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Text(
+                      '暂无家人',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                )
+              : SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      ...familyMembers.map(
+                        (member) => FamilyMemberCard(
+                          member: member,
+                          onTap: () {
+                            navigationProvider.setCurrentIndex(1);
+                          },
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          navigationProvider.setCurrentIndex(1);
+                        },
+                        child: Container(
+                          width: 100,
+                          margin: const EdgeInsets.only(right: 12),
+                          child: Column(
+                            children: [
+                              Container(
+                                width: 60,
+                                height: 60,
+                                decoration: BoxDecoration(
+                                  color: colorScheme.surfaceContainerHighest,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Icons.add,
+                                  size: 30,
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                '添加',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
-                    )
-                  : SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          ...familyMembers.map(
-                            (member) => FamilyMemberCard(
-                              member: member,
-                              onTap: () {
-                                navigationProvider.setCurrentIndex(1);
-                              },
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: () {
-                              navigationProvider.setCurrentIndex(1);
-                            },
-                            child: Container(
-                              width: 100,
-                              margin: const EdgeInsets.only(right: 12),
-                              child: Column(
-                                children: [
-                                  Container(
-                                    width: 60,
-                                    height: 60,
-                                    decoration: BoxDecoration(
-                                      color: colorScheme.tertiaryContainer
-                                          .withValues(alpha: 0.5),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Icon(
-                                      Icons.add,
-                                      size: 30,
-                                      color: colorScheme.tertiary,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    '添加',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: colorScheme.onSurfaceVariant,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    ],
+                  ),
+                ),
         ],
       ),
     );
@@ -453,19 +432,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            colorScheme.secondaryContainer.withValues(alpha: 0.3),
-            colorScheme.surface,
-          ],
-        ),
+        color: colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: colorScheme.secondary.withValues(alpha: 0.1),
-          width: 1,
-        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -493,23 +461,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 )
               : articles.isEmpty
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Text(
-                          '暂无推文',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                        ),
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Text(
+                      '暂无推文',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: colorScheme.onSurfaceVariant,
                       ),
-                    )
-                  : Column(
-                      children: articles.map((article) {
-                        return _buildArticleItem(article, isDark, colorScheme);
-                      }).toList(),
                     ),
+                  ),
+                )
+              : Column(
+                  children: articles.map((article) {
+                    return _buildArticleItem(article, isDark, colorScheme);
+                  }).toList(),
+                ),
         ],
       ),
     );
@@ -530,10 +498,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+          color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: colorScheme.outline.withValues(alpha: 0.1),
+            color: isDark
+                ? Colors.white10
+                : Colors.black.withValues(alpha: 0.05),
           ),
         ),
         child: Row(
@@ -550,15 +520,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     return Container(
                       width: 60,
                       height: 60,
-                      decoration: BoxDecoration(
-                        color: colorScheme.secondaryContainer.withValues(
-                          alpha: 0.5,
-                        ),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+                      color: colorScheme.surfaceContainerHighest,
                       child: Icon(
                         LucideIcons.image,
-                        color: colorScheme.secondary,
+                        color: colorScheme.onSurfaceVariant,
                       ),
                     );
                   },
@@ -584,7 +549,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: colorScheme.onSurface,
+                      color: isDark ? Colors.white : Colors.black87,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -594,7 +559,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     article.source ?? '公众号',
                     style: TextStyle(
                       fontSize: 12,
-                      color: colorScheme.onSurfaceVariant,
+                      color: isDark ? Colors.white54 : Colors.black45,
                     ),
                   ),
                 ],

@@ -27,8 +27,6 @@ public class ChatMemoryServiceImpl extends ServiceImpl<ChatMemoryMapper, ChatMem
     private final ChatMemoryMapper chatMemoryMapper;
     
     private static final Pattern IMAGE_PATTERN = Pattern.compile("^\\[images:([^\\]]+)\\]");
-    private static final Pattern AUDIO_PATTERN = Pattern.compile("^\\[audio:([^\\]]+)\\]");
-    private static final Pattern TTS_AUDIO_PATTERN = Pattern.compile("^\\[tts:([^\\]]+)\\]");
     
     @Override
     public void saveChatMessage(String sessionId, String role, String content, String aiModel, Integer tokenCount) {
@@ -74,38 +72,22 @@ public class ChatMemoryServiceImpl extends ServiceImpl<ChatMemoryMapper, ChatMem
         String role = (String) map.get("role");
         
         List<String> imageUrls = null;
-        String audioUrl = null;
-        String ttsAudioUrl = null;
         String cleanContent = content;
         
-        if (content != null) {
-            Matcher imageMatcher = IMAGE_PATTERN.matcher(content);
-            if (imageMatcher.find()) {
-                String urlsStr = imageMatcher.group(1);
+        if ("USER".equals(role) && content != null) {
+            Matcher matcher = IMAGE_PATTERN.matcher(content);
+            if (matcher.find()) {
+                String urlsStr = matcher.group(1);
                 imageUrls = List.of(urlsStr.split(","));
-                cleanContent = cleanContent.substring(imageMatcher.end());
-            }
-            
-            Matcher audioMatcher = AUDIO_PATTERN.matcher(cleanContent);
-            if (audioMatcher.find()) {
-                audioUrl = audioMatcher.group(1);
-                cleanContent = cleanContent.substring(audioMatcher.end());
-            }
-            
-            Matcher ttsMatcher = TTS_AUDIO_PATTERN.matcher(cleanContent);
-            if (ttsMatcher.find()) {
-                ttsAudioUrl = ttsMatcher.group(1);
-                cleanContent = cleanContent.substring(ttsMatcher.end());
+                cleanContent = content.substring(matcher.end());
             }
         }
         
         return ChatMemoryVO.builder()
                 .sessionId((String) map.get("session_id"))
                 .role(role)
-                .content(cleanContent.trim())
+                .content(cleanContent)
                 .imageUrls(imageUrls)
-                .audioUrl(audioUrl)
-                .ttsAudioUrl(ttsAudioUrl)
                 .createdAt(createdAt)
                 .build();
     }
@@ -131,28 +113,5 @@ public class ChatMemoryServiceImpl extends ServiceImpl<ChatMemoryMapper, ChatMem
         return maps.stream()
                 .map(this::convertMapToVO)
                 .toList();
-    }
-
-    @Override
-    public void updateLastAssistantTtsUrl(String sessionId, String ttsAudioUrl) {
-        Map<String, Object> lastMsg = chatMemoryMapper.findLastAssistantMessage(sessionId);
-        if (lastMsg == null) {
-            log.warn("未找到会话 {} 的最后助手消息", sessionId);
-            return;
-        }
-
-        String content = (String) lastMsg.get("content");
-        Object id = lastMsg.get("id");
-
-        if (content == null) return;
-
-        String ttsPrefix = "[tts:" + ttsAudioUrl + "]";
-        if (content.startsWith("[tts:")) {
-            content = TTS_AUDIO_PATTERN.matcher(content).replaceFirst("") ;
-        }
-        String newContent = ttsPrefix + content;
-
-        chatMemoryMapper.updateContentById(id, newContent);
-        log.info("更新会话 {} 最后助手消息的TTS URL: {}", sessionId, ttsAudioUrl);
     }
 }

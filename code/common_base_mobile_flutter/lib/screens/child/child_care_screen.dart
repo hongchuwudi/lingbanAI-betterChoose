@@ -100,9 +100,9 @@ class _ChildCareScreenState extends State<ChildCareScreen>
           try {
             final elderlyRecordsRes =
                 await MedicationService.getElderlyRecordsByDate(
-              binding.elderlyProfileId!,
-              DateTime.now(),
-            );
+                  binding.elderlyProfileId!,
+                  DateTime.now(),
+                );
             records[binding.elderlyProfileId!] = elderlyRecordsRes.data ?? [];
           } catch (e) {
             records[binding.elderlyProfileId!] = [];
@@ -264,8 +264,9 @@ class _ChildCareScreenState extends State<ChildCareScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor:
-          isDark ? const Color(0xFF1A1A2E) : const Color(0xFFF8F9FA),
+      backgroundColor: isDark
+          ? const Color(0xFF1A1A2E)
+          : const Color(0xFFF8F9FA),
       appBar: AppBar(
         title: const Text('关怀', style: TextStyle(fontWeight: FontWeight.w600)),
         centerTitle: true,
@@ -432,8 +433,6 @@ class _ChildCareScreenState extends State<ChildCareScreen>
               ),
             ),
           ],
-          const SizedBox(height: 24),
-          _buildMapEntryCard(isDark),
         ],
       ),
     );
@@ -444,8 +443,9 @@ class _ChildCareScreenState extends State<ChildCareScreen>
       return const Center(child: CircularProgressIndicator());
     }
 
-    final elderlyMembers =
-        _familyMembers.where((b) => b.myRole == 'child').toList();
+    final elderlyMembers = _familyMembers
+        .where((b) => b.myRole == 'child')
+        .toList();
 
     if (_notifications.isEmpty && elderlyMembers.isEmpty) {
       return _buildEmptyState(
@@ -565,7 +565,9 @@ class _ChildCareScreenState extends State<ChildCareScreen>
               const SizedBox(height: 12),
               const Divider(height: 1),
               const SizedBox(height: 12),
-              ...records.take(3).map(
+              ...records
+                  .take(3)
+                  .map(
                     (record) => Padding(
                       padding: const EdgeInsets.only(bottom: 8),
                       child: Row(
@@ -578,8 +580,8 @@ class _ChildCareScreenState extends State<ChildCareScreen>
                             color: record.isCheckedIn
                                 ? Colors.green
                                 : (record.isMissed
-                                    ? Colors.red
-                                    : Colors.orange),
+                                      ? Colors.red
+                                      : Colors.orange),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
@@ -595,8 +597,8 @@ class _ChildCareScreenState extends State<ChildCareScreen>
                               color: record.isCheckedIn
                                   ? Colors.green
                                   : (record.isMissed
-                                      ? Colors.red
-                                      : Colors.orange),
+                                        ? Colors.red
+                                        : Colors.orange),
                             ),
                           ),
                         ],
@@ -701,82 +703,6 @@ class _ChildCareScreenState extends State<ChildCareScreen>
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMapEntryCard(bool isDark) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return GestureDetector(
-      onTap: () => Navigator.pushNamed(context, '/care-map'),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              colorScheme.primary.withValues(alpha: 0.08),
-              colorScheme.tertiary.withValues(alpha: 0.06),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: colorScheme.primary.withValues(alpha: 0.15),
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: colorScheme.primary.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                LucideIcons.mapPin,
-                color: colorScheme.primary,
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '家园定位',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white : Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '设置家园位置，查找周边医院',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: isDark ? Colors.white54 : Colors.black45,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: colorScheme.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                LucideIcons.chevronRight,
-                color: colorScheme.primary,
-                size: 18,
-              ),
-            ),
-          ],
         ),
       ),
     );

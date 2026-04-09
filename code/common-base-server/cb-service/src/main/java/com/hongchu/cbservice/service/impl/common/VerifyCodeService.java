@@ -1,3 +1,4 @@
+// VerifyCodeService.java
 package com.hongchu.cbservice.service.impl.common;
 
 
@@ -21,22 +22,24 @@ public class VerifyCodeService implements EmailService {
 
     private final ManualCacheManager cacheManager;
     private final EmailUtil emailUtil;
-    private final AsyncEmailService asyncEmailService;
 
     /**
-     * 发送邮箱验证码 - 支持不同业务场景（异步发送）
+     * 发送邮箱验证码 - 支持不同业务场景
      */
     public void sendEmailVerifyCode(String email, String businessType) {
+        // 1. 邮箱格式校验
         if (!emailUtil.isValidEmail(email))
             throw new BusinessException(ErrorMessageConstants.ERROR_EMAIL_FORMAT);
 
+        // 2. 生成验证码
         String verifyCode = emailUtil.generateVerifyCode();
 
+        // 3. 发送邮件（根据业务类型定制）
+        emailUtil.sendVerifyCodeEmail(email, verifyCode, businessType);
+
+        // 4. 保存到缓存（包含业务类型）
         saveVerifyCode(email, verifyCode, businessType);
-
-        asyncEmailService.sendVerifyCodeAsync(email, verifyCode, businessType);
-
-        log.info("{}验证码已提交异步发送，邮箱：{}", EmailUtil.getBusinessTypeName(businessType), email);
+        log.info("{}验证码发送成功，邮箱：{}", EmailUtil.getBusinessTypeName(businessType), email);
     }
 
     /**
@@ -70,6 +73,7 @@ public class VerifyCodeService implements EmailService {
 
         boolean isValid = storedCode.equals(inputCode);
         if (isValid) {
+            // 验证成功后删除验证码
             deleteVerifyCode(email, businessType);
             log.info("{}验证码验证成功，邮箱：{}", EmailUtil.getBusinessTypeName(businessType), email);
         } else {

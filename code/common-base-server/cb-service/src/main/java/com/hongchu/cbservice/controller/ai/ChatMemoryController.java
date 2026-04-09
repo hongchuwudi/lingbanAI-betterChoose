@@ -42,13 +42,4 @@ public class ChatMemoryController {
         chatMemoryService.clearChatHistory(sessionId);
         return Result.success();
     }
-
-    @PostMapping("/update-tts-url")
-    public Result<Void> updateTtsUrl(
-            @RequestParam("sessionId") String sessionId,
-            @RequestParam("ttsAudioUrl") String ttsAudioUrl) {
-        log.info("更新会话TTS音频URL: 会话ID={}, URL={}", sessionId, ttsAudioUrl);
-        chatMemoryService.updateLastAssistantTtsUrl(sessionId, ttsAudioUrl);
-        return Result.success();
-    }
 }

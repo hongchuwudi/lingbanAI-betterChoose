@@ -25,15 +25,10 @@ class AppTheme {
       // 启用Material 3设计
       useMaterial3: true,
 
-      // 基于种子颜色生成色彩方案，并显式指定 primary 为浅蓝色
+      // 基于种子颜色生成色彩方案
       colorScheme: ColorScheme.fromSeed(
         seedColor: const Color(0xFF42A5F5), // 阳光天空蓝
         brightness: Brightness.light, // 亮色模式
-      ).copyWith(
-        primary: const Color(0xFF42A5F5), // 浅蓝色主色
-        onPrimary: Colors.white,
-        primaryContainer: const Color(0xFFBBDEFB), // 浅蓝容器色
-        onPrimaryContainer: const Color(0xFF004A77),
       ),
 
       // 应用栏主题配置
@@ -62,7 +57,7 @@ class AppTheme {
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(
-            color: Color(0xFF42A5F5), // 聚焦时显示浅蓝色边框
+            color: const Color(0xFF42A5F5), // 聚焦时显示阳光蓝色边框
             width: 2,
           ),
         ),

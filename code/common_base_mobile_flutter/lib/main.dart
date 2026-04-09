@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
-import 'dart:io';
 import 'package:provider/provider.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:flutter_baidu_mapapi_base/flutter_baidu_mapapi_base.dart'
-    show BMFMapSDK, BMF_COORD_TYPE;
-import 'package:flutter_bmflocation/flutter_bmflocation.dart';
 import 'screens/splash_screen.dart';
 import 'screens/welcome_screen.dart';
 import 'screens/login_screen.dart';
@@ -25,7 +21,6 @@ import 'screens/edit_profile_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/elder/elder_family_screen.dart';
 import 'screens/child/child_family_screen.dart';
-import 'screens/care/care_map_screen.dart';
 import 'config/app_config.dart';
 import 'config/app_theme.dart';
 import 'models/theme_model.dart';
@@ -36,24 +31,14 @@ import 'utils/http_interceptor.dart';
 import 'widgets/notification/notification_helper.dart';
 import 'widgets/bottom_nav_bar.dart';
 import 'services/global_notification_service.dart';
-import 'config/api_keys.dart';
 
-Future<void> _initBaiduMap() async {
-  BMFMapSDK.setAgreePrivacy(true);
-  if (Platform.isIOS) {
-    BMFMapSDK.setApiKeyAndCoordType(
-        ApiKeys.baiduMapIosKey, BMF_COORD_TYPE.BD09LL);
-    LocationFlutterPlugin().authAK(ApiKeys.baiduMapIosKey);
-  } else if (Platform.isAndroid) {
-    BMFMapSDK.setCoordType(BMF_COORD_TYPE.BD09LL);
-  }
-  LocationFlutterPlugin().setAgreePrivacy(true);
-}
-
+/// 应用入口函数
+///
+/// 功能说明：
+/// - 启动Flutter应用
+/// - 使用runApp()方法启动根组件
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-
-  _initBaiduMap();
 
   HttpInterceptorManager().initialize(
     baseUrl: AppConfig.apiBaseUrl,
@@ -125,7 +110,6 @@ class MyApp extends StatelessWidget {
               '/settings': (context) => const SettingsScreen(),
               '/elder-family': (context) => const ElderFamilyScreen(),
               '/child-family': (context) => const ChildFamilyScreen(),
-              '/care-map': (context) => const CareMapScreen(),
             },
           );
         },

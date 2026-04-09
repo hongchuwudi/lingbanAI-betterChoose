@@ -7,7 +7,6 @@ import '../services/chat_service.dart';
 import '../widgets/chat_bubble.dart';
 import '../widgets/chat_history_drawer.dart';
 import '../widgets/chat_input_bar.dart';
-import 'voice_call_screen.dart';
 
 class LingbanScreen extends StatefulWidget {
   const LingbanScreen({super.key});
@@ -185,7 +184,8 @@ class _LingbanScreenState extends State<LingbanScreen>
     setState(() {
       _isStreaming = false;
       if (_streamingMessageId != null) {
-        final currentContent = _chatService.currentSession?.messages
+        final currentContent =
+            _chatService.currentSession?.messages
                 .firstWhere((m) => m.id == _streamingMessageId)
                 .content ??
             '';
@@ -235,24 +235,6 @@ class _LingbanScreenState extends State<LingbanScreen>
     );
   }
 
-  void _openVoiceCall() async {
-    final result = await Navigator.push<List<ChatMessage>>(
-      context,
-      MaterialPageRoute(
-        builder: (context) => VoiceCallScreen(
-          sessionId: _chatService.currentSessionId,
-          existingMessages: _chatService.currentSession?.messages,
-        ),
-        fullscreenDialog: true,
-      ),
-    );
-
-    if (result != null && mounted) {
-      await _chatService.refreshCurrentSession();
-      if (mounted) setState(() {});
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -260,8 +242,9 @@ class _LingbanScreenState extends State<LingbanScreen>
 
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor:
-          isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF5F5F5),
+      backgroundColor: isDark
+          ? const Color(0xFF1E1E1E)
+          : const Color(0xFFF5F5F5),
       drawer: ChatHistoryDrawer(
         chatService: _chatService,
         onNewChat: _handleNewChat,
@@ -309,27 +292,6 @@ class _LingbanScreenState extends State<LingbanScreen>
       ),
       centerTitle: true,
       actions: [
-        Container(
-          margin: const EdgeInsets.only(right: 4),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                colorScheme.primaryContainer,
-                colorScheme.primaryContainer.withOpacity(0.7),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: IconButton(
-            icon: Icon(
-              LucideIcons.phone,
-              color: colorScheme.onPrimaryContainer,
-              size: 20,
-            ),
-            onPressed: _openVoiceCall,
-            tooltip: '语音对话',
-          ),
-        ),
         PopupMenuButton<String>(
           icon: Icon(LucideIcons.ellipsis, color: colorScheme.onSurface),
           onSelected: (value) {
@@ -382,9 +344,9 @@ class _LingbanScreenState extends State<LingbanScreen>
       itemCount: messages.length,
       itemBuilder: (context, index) {
         final message = messages[index];
-        final showTimestamp = index == 0 ||
-            messages[index - 1]
-                    .timestamp
+        final showTimestamp =
+            index == 0 ||
+            messages[index - 1].timestamp
                     .difference(message.timestamp)
                     .inMinutes
                     .abs() >
@@ -404,11 +366,7 @@ class _LingbanScreenState extends State<LingbanScreen>
           },
           child: Padding(
             padding: const EdgeInsets.only(bottom: 12),
-            child: ChatBubble(
-              message: message,
-              showTimestamp: showTimestamp,
-              onSynthesizeSpeech: _chatService.synthesizeSpeech,
-            ),
+            child: ChatBubble(message: message, showTimestamp: showTimestamp),
           ),
         );
       },
@@ -427,8 +385,10 @@ class _LingbanScreenState extends State<LingbanScreen>
               color: colorScheme.primaryContainer,
               shape: BoxShape.circle,
             ),
-            child: ClipOval(
-              child: Image.asset('assets/ai_chat_logo.png', fit: BoxFit.cover),
+            child: Icon(
+              LucideIcons.sparkles,
+              size: 40,
+              color: colorScheme.primary,
             ),
           ),
           const SizedBox(height: 24),
@@ -457,14 +417,14 @@ class _LingbanScreenState extends State<LingbanScreen>
                 () => _handleSend('今天天气怎么样？', null),
               ),
               _buildSuggestionChip(
-                '今日养生建议',
+                '帮我写一首诗',
                 colorScheme,
-                () => _handleSend('今日养生建议', null),
+                () => _handleSend('帮我写一首诗', null),
               ),
               _buildSuggestionChip(
-                '高血压怎么管理？',
+                '讲个笑话吧',
                 colorScheme,
-                () => _handleSend('高血压怎么管理？', null),
+                () => _handleSend('讲个笑话吧', null),
               ),
             ],
           ),

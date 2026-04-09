@@ -23,6 +23,4 @@ public interface IChatMemoryService extends IService<ChatMemory> {
     ChatMemoryVO convertToVO(ChatMemory chatMemory);
     // 转换列表
     List<ChatMemoryVO> convertToVOList(List<ChatMemory> chatMemories);
-    // 更新最后助手消息的TTS音频URL
-    void updateLastAssistantTtsUrl(String sessionId, String ttsAudioUrl);
 }

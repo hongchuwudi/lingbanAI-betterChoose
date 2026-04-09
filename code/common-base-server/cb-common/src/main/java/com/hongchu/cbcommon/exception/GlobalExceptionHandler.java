@@ -27,15 +27,6 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * 捕获语音服务异常
-     */
-    @ExceptionHandler(VoiceServiceException.class)
-    public Result<String> exceptionHandler(VoiceServiceException ex){
-        log.error("语音服务异常：{}", ex.getMessage());
-        return Result.fail("语音服务异常: " + ex.getMessage());
-    }
-
-    /**
      * 捕获SQL语法错误异常（新增 - 处理Unknown column错误）
      */
     @ExceptionHandler(BadSqlGrammarException.class)

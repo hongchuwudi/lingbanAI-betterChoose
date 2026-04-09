@@ -1,8 +1,8 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 import '../services/websocket_service.dart';
+import '../config/app_config.dart';
 import '../widgets/notification/notification_helper.dart';
 import '../providers/auth_provider.dart';
 
@@ -13,81 +13,78 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen>
-    with TickerProviderStateMixin {
-  int _loginType = 0; // 0: 账号密码登录, 1: 邮箱登录
+class _LoginScreenState extends State<LoginScreen> {
+  int _loginType = 0; // 0: 手机号登录, 1: 账号密码登录, 2: 邮箱登录
   bool _isLoading = false;
   bool _codeCountdown = false;
   int _countdownSeconds = 60;
 
+  final _phoneController = TextEditingController();
+  final _codeController = TextEditingController();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _codeController = TextEditingController();
   bool _obscurePassword = true;
-
-  late AnimationController _mainController;
-  late AnimationController _floatController;
-  late Animation<double> _mainFade;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _mainController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1000),
-    );
-    _mainFade = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _mainController, curve: Curves.easeOut));
-
-    _floatController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 3000),
-    )..repeat(reverse: true);
-
-    _mainController.forward();
-  }
 
   @override
   void dispose() {
-    _mainController.dispose();
-    _floatController.dispose();
+    _phoneController.dispose();
+    _codeController.dispose();
     _usernameController.dispose();
     _passwordController.dispose();
-    _emailController.dispose();
-    _codeController.dispose();
     super.dispose();
   }
 
+  Future<void> _sendCode() async {
+    final phone = _phoneController.text.trim();
+    if (phone.isEmpty) {
+      NotificationHelper.showWarning(message: '请输入手机号');
+      return;
+    }
+    if (_codeCountdown) return;
+
+    setState(() {
+      _codeCountdown = true;
+    });
+    _startCountdown();
+
+    final result = await AuthService.sendPhoneCode(phone);
+
+    // 添加 mounted 检查
+    if (mounted) {
+      NotificationHelper.showError(message: result['message']);
+    }
+  }
+
   Future<void> _sendEmailCode() async {
-    final email = _emailController.text.trim();
+    final email = _usernameController.text.trim();
     if (email.isEmpty) {
       NotificationHelper.showWarning(message: '请输入邮箱地址');
       return;
     }
     if (_codeCountdown) return;
 
-    setState(() => _codeCountdown = true);
+    setState(() {
+      _codeCountdown = true;
+    });
     _startCountdown();
 
-    final result = await AuthService.sendEmailCode(email, 'login');
+    final result = await AuthService.sendEmailCode(email);
+
+    // 添加 mounted 检查
     if (mounted) {
-      if (result['success'] == true) {
-        NotificationHelper.showSuccess(message: result['message']);
-      } else {
-        NotificationHelper.showError(message: result['message']);
-      }
+      NotificationHelper.showError(message: result['message']);
     }
   }
 
   void _startCountdown() {
     Future.delayed(const Duration(seconds: 1), () {
+      //  添加 mounted 检查
       if (!mounted) return;
+
       if (_countdownSeconds > 0) {
-        setState(() => _countdownSeconds--);
+        setState(() {
+          _countdownSeconds--;
+        });
         _startCountdown();
       } else {
         setState(() {
@@ -99,8 +96,9 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Future<void> _login() async {
-    if (_loginType == 1) {
-      final email = _emailController.text.trim();
+    if (_loginType == 2) {
+      // 邮箱登录
+      final email = _usernameController.text.trim();
       final code = _codeController.text.trim();
       if (email.isEmpty || code.isEmpty) {
         NotificationHelper.showWarning(message: '请输入邮箱地址和验证码');
@@ -108,7 +106,31 @@ class _LoginScreenState extends State<LoginScreen>
       }
       setState(() => _isLoading = true);
       final result = await AuthService.loginByEmail(email, code);
+
+      //  添加 mounted 检查
       if (!mounted) return;
+
+      setState(() => _isLoading = false);
+      if (result['success'] == true) {
+        NotificationHelper.showSuccess(message: '登录成功');
+        _handleLoginSuccess(result['user']);
+      } else {
+        NotificationHelper.showError(message: result['message'] ?? '登录失败');
+      }
+    } else if (_loginType == 0) {
+      // 手机号登录
+      final phone = _phoneController.text.trim();
+      final code = _codeController.text.trim();
+      if (phone.isEmpty || code.isEmpty) {
+        NotificationHelper.showWarning(message: '请输入手机号和验证码');
+        return;
+      }
+      setState(() => _isLoading = true);
+      final result = await AuthService.loginByPhone(phone, code);
+
+      //  添加 mounted 检查
+      if (!mounted) return;
+
       setState(() => _isLoading = false);
       if (result['success'] == true) {
         NotificationHelper.showSuccess(message: '登录成功');
@@ -117,6 +139,7 @@ class _LoginScreenState extends State<LoginScreen>
         NotificationHelper.showError(message: result['message'] ?? '登录失败');
       }
     } else {
+      // 账号密码登录
       final username = _usernameController.text.trim();
       final password = _passwordController.text;
       if (username.isEmpty || password.isEmpty) {
@@ -125,7 +148,10 @@ class _LoginScreenState extends State<LoginScreen>
       }
       setState(() => _isLoading = true);
       final result = await AuthService.loginByPassword(username, password);
+
+      //  添加 mounted 检查
       if (!mounted) return;
+
       setState(() => _isLoading = false);
       if (result['success'] == true) {
         NotificationHelper.showSuccess(message: '登录成功');
@@ -136,6 +162,7 @@ class _LoginScreenState extends State<LoginScreen>
     }
   }
 
+  /// 处理登录成功后的路由逻辑
   void _handleLoginSuccess(dynamic user) async {
     if (user == null) {
       Navigator.pushReplacementNamed(context, '/role-selection');
@@ -151,7 +178,7 @@ class _LoginScreenState extends State<LoginScreen>
       await authStore.init();
 
       WebSocketService().connect().catchError((error) {
-        debugPrint('WebSocket 连接失败，但不影响登录: $error');
+        print('WebSocket 连接失败，但不影响登录: $error');
       });
 
       if (mounted) {
@@ -165,258 +192,236 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = colorScheme.primary;
+    final onSurface = colorScheme.onSurface;
+    final surface = colorScheme.surface;
+    final surfaceContainerHighest = colorScheme.surfaceContainerHighest;
+    final onSurfaceVariant = colorScheme.onSurfaceVariant;
 
     return Scaffold(
-      backgroundColor:
-          isDark ? const Color(0xFF0F0F1A) : const Color(0xFFF0F4FF),
-      body: Stack(
-        children: [
-          _buildBackground(isDark, colorScheme),
-          SafeArea(
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 32),
-              child: FadeTransition(
-                opacity: _mainFade,
-                child: Column(
-                  children: [
-                    const SizedBox(height: 20),
-                    Align(
-                      alignment: Alignment.topLeft,
-                      child: IconButton(
-                        icon: Icon(
-                          Icons.arrow_back_ios,
-                          color: colorScheme.onSurface.withValues(alpha: 0.6),
-                          size: 20,
-                        ),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                    ),
-                    _buildLogoSection(isDark, colorScheme),
-                    const SizedBox(height: 36),
-                    _buildLoginTypeSwitch(colorScheme, isDark),
-                    const SizedBox(height: 24),
-                    _buildFormCard(isDark, colorScheme),
-                    const SizedBox(height: 24),
-                    _buildLoginButton(colorScheme),
-                    const SizedBox(height: 16),
-                    _buildForgotPassword(colorScheme),
-                    const SizedBox(height: 36),
-                    _buildRegisterLink(colorScheme),
-                    const SizedBox(height: 30),
-                  ],
-                ),
+      backgroundColor: colorScheme.background,
+      appBar: AppBar(
+        backgroundColor: surface,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back_ios,
+            color: onSurface.withValues(alpha: 0.6),
+            size: 20,
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pushNamed(context, '/register'),
+            child: Text(
+              '注册',
+              style: TextStyle(
+                color: primaryColor,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildBackground(bool isDark, ColorScheme colorScheme) {
-    return Positioned.fill(
-      child: Stack(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: isDark
-                    ? [const Color(0xFF1A1A3E), const Color(0xFF0F0F1A)]
-                    : [const Color(0xFFE8EEFF), const Color(0xFFF0F4FF)],
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 40),
+            Text(
+              '欢迎回来',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: onSurface,
               ),
             ),
-          ),
-          AnimatedBuilder(
-            animation: _floatController,
-            builder: (context, child) {
-              final offset = _floatController.value * 20 - 10;
-              return Stack(
+            const SizedBox(height: 8),
+            Text(
+              '登录你的账号，守护家人健康',
+              style: TextStyle(fontSize: 14, color: onSurfaceVariant),
+            ),
+            const SizedBox(height: 40),
+
+            // 登录方式切换
+            Container(
+              height: 44,
+              decoration: BoxDecoration(
+                color: surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
                 children: [
-                  Positioned(
-                    top: 80 + offset,
-                    right: -30,
-                    child: Container(
-                      width: 160,
-                      height: 160,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: colorScheme.primary.withValues(
-                          alpha: isDark ? 0.08 : 0.06,
-                        ),
-                      ),
-                    ),
+                  _buildTabButton('手机号登录', 0, primaryColor, onSurface, surface),
+                  _buildTabButton(
+                    '账号密码登录',
+                    1,
+                    primaryColor,
+                    onSurface,
+                    surface,
                   ),
-                  Positioned(
-                    top: 200 - offset * 0.5,
-                    left: -40,
-                    child: Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: colorScheme.primary.withValues(
-                          alpha: isDark ? 0.05 : 0.04,
-                        ),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 150 + offset * 0.7,
-                    right: 40,
-                    child: Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: colorScheme.tertiary.withValues(
-                          alpha: isDark ? 0.06 : 0.05,
-                        ),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 80 - offset * 0.3,
-                    left: 60,
-                    child: Container(
-                      width: 100,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: colorScheme.secondary.withValues(
-                          alpha: isDark ? 0.05 : 0.04,
-                        ),
-                      ),
-                    ),
-                  ),
+                  _buildTabButton('邮箱登录', 2, primaryColor, onSurface, surface),
                 ],
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLogoSection(bool isDark, ColorScheme colorScheme) {
-    return Column(
-      children: [
-        AnimatedBuilder(
-          animation: _floatController,
-          builder: (context, _) {
-            final floatOffset = _floatController.value * 6 - 3;
-            return Transform.translate(
-              offset: Offset(0, floatOffset),
-              child: Container(
-                width: 110,
-                height: 110,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      colorScheme.primary.withValues(alpha: 0.15),
-                      colorScheme.primaryContainer.withValues(alpha: 0.1),
-                    ],
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: colorScheme.primary.withValues(alpha: 0.2),
-                      blurRadius: 30,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: ClipOval(
-                    child: Image.asset(
-                      'assets/lbai-logo-nosy.jpeg',
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
               ),
-            );
-          },
-        ),
-        const SizedBox(height: 20),
-        ShaderMask(
-          shaderCallback: (bounds) => LinearGradient(
-            colors: [colorScheme.primary, colorScheme.tertiary],
-          ).createShader(bounds),
-          child: const Text(
-            '灵伴',
-            style: TextStyle(
-              fontSize: 36,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-              letterSpacing: 4,
             ),
-          ),
+            const SizedBox(height: 30),
+
+            // 表单区域
+            if (_loginType == 2)
+              _buildEmailLoginForm(primaryColor, surfaceContainerHighest)
+            else if (_loginType == 0)
+              _buildCodeLoginForm(primaryColor, surfaceContainerHighest)
+            else
+              _buildPasswordLoginForm(surfaceContainerHighest),
+
+            const SizedBox(height: 30),
+
+            // 登录按钮
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: _isLoading
+                  ? Center(
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: primaryColor,
+                        ),
+                      ),
+                    )
+                  : ElevatedButton(
+                      onPressed: _login,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        '登录',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+            ),
+
+            const SizedBox(height: 40),
+
+            // 找回密码链接
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () =>
+                      Navigator.pushNamed(context, '/forget-password'),
+                  child: Text(
+                    '忘记密码？',
+                    style: TextStyle(
+                      color: primaryColor,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+
+            // 其他登录方式
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    height: 1,
+                    color: onSurfaceVariant.withValues(alpha: 0.2),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(
+                    '其他登录方式',
+                    style: TextStyle(fontSize: 12, color: onSurfaceVariant),
+                  ),
+                ),
+                Expanded(
+                  child: Container(
+                    height: 1,
+                    color: onSurfaceVariant.withValues(alpha: 0.2),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+
+            // 社交登录图标
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildSocialIcon(Icons.wechat, '微信'),
+                _buildSocialIcon(Icons.payment, '支付宝'),
+                _buildSocialIcon(Icons.apple, 'Apple ID'),
+              ],
+            ),
+            const SizedBox(height: 40),
+
+            // 注册链接
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  '没有账号？',
+                  style: TextStyle(color: onSurfaceVariant, fontSize: 14),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pushNamed(context, '/register'),
+                  child: Text(
+                    '立即注册',
+                    style: TextStyle(
+                      color: primaryColor,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
-        const SizedBox(height: 8),
-        Text(
-          '守护家人健康，温暖每一刻',
-          style: TextStyle(
-            fontSize: 15,
-            color: isDark ? Colors.white54 : Colors.black45,
-            letterSpacing: 1,
-          ),
-        ),
-      ],
+      ),
     );
   }
 
-  Widget _buildLoginTypeSwitch(ColorScheme colorScheme, bool isDark) {
-    return Container(
-      height: 44,
-      decoration: BoxDecoration(
-        color: isDark
-            ? Colors.white.withValues(alpha: 0.06)
-            : Colors.black.withValues(alpha: 0.04),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          _buildTypeTab('账号密码', 0, colorScheme, isDark),
-          _buildTypeTab('邮箱登录', 1, colorScheme, isDark),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTypeTab(
+  Widget _buildTabButton(
     String title,
     int type,
-    ColorScheme colorScheme,
-    bool isDark,
+    Color primaryColor,
+    Color onSurface,
+    Color surface,
   ) {
     final isActive = type == _loginType;
+
     return Expanded(
       child: GestureDetector(
         onTap: () => setState(() => _loginType = type),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
+        child: Container(
           height: 40,
           margin: const EdgeInsets.all(2),
           decoration: BoxDecoration(
-            color: isActive
-                ? (isDark ? const Color(0xFF1E1E32) : Colors.white)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
+            color: isActive ? surface : Colors.transparent,
+            borderRadius: BorderRadius.circular(6),
             boxShadow: isActive
                 ? [
                     BoxShadow(
-                      color: Colors.black.withValues(
-                        alpha: isDark ? 0.3 : 0.08,
-                      ),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
                     ),
                   ]
                 : [],
@@ -428,8 +433,8 @@ class _LoginScreenState extends State<LoginScreen>
                 fontSize: 14,
                 fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
                 color: isActive
-                    ? colorScheme.primary
-                    : colorScheme.onSurfaceVariant,
+                    ? primaryColor
+                    : onSurface.withValues(alpha: 0.5),
               ),
             ),
           ),
@@ -438,327 +443,305 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  Widget _buildFormCard(bool isDark, ColorScheme colorScheme) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: isDark
-            ? const Color(0xFF1E1E32).withValues(alpha: 0.8)
-            : Colors.white.withValues(alpha: 0.85),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.08)
-              : Colors.black.withValues(alpha: 0.04),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 300),
-        switchInCurve: Curves.easeOutCubic,
-        switchOutCurve: Curves.easeInCubic,
-        child: _loginType == 1
-            ? _buildEmailForm(isDark, colorScheme)
-            : _buildPasswordForm(isDark, colorScheme),
-      ),
-    );
-  }
-
-  Widget _buildPasswordForm(bool isDark, ColorScheme colorScheme) {
+  Widget _buildCodeLoginForm(
+    Color primaryColor,
+    Color surfaceContainerHighest,
+  ) {
     return Column(
-      key: const ValueKey('password'),
       children: [
-        _buildInputField(
-          controller: _usernameController,
-          hintText: '请输入手机号/账号/邮箱/ID号',
-          prefixIcon: Icons.person_outline_rounded,
-          isDark: isDark,
-          colorScheme: colorScheme,
+        Container(
+          height: 52,
+          decoration: BoxDecoration(
+            color: surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: TextField(
+            controller: _phoneController,
+            keyboardType: TextInputType.phone,
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+            decoration: InputDecoration(
+              hintText: '请输入手机号',
+              hintStyle: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+              prefixIcon: Icon(
+                Icons.phone,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 16,
+              ),
+            ),
+          ),
         ),
         const SizedBox(height: 16),
-        _buildInputField(
-          controller: _passwordController,
-          hintText: '请输入密码',
-          prefixIcon: Icons.lock_outline_rounded,
-          isDark: isDark,
-          colorScheme: colorScheme,
-          obscureText: _obscurePassword,
-          suffixIcon: IconButton(
-            icon: Icon(
-              _obscurePassword
-                  ? Icons.visibility_off_outlined
-                  : Icons.visibility_outlined,
-              color: colorScheme.onSurfaceVariant,
-              size: 20,
-            ),
-            onPressed: () =>
-                setState(() => _obscurePassword = !_obscurePassword),
+        Container(
+          height: 52,
+          decoration: BoxDecoration(
+            color: surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(12),
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildEmailForm(bool isDark, ColorScheme colorScheme) {
-    return Column(
-      key: const ValueKey('email'),
-      children: [
-        _buildInputField(
-          controller: _emailController,
-          hintText: '请输入邮箱地址',
-          prefixIcon: Icons.email_outlined,
-          isDark: isDark,
-          colorScheme: colorScheme,
-          keyboardType: TextInputType.emailAddress,
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: _buildInputField(
-                controller: _codeController,
-                hintText: '请输入验证码',
-                prefixIcon: Icons.sms_outlined,
-                isDark: isDark,
-                colorScheme: colorScheme,
-                keyboardType: TextInputType.number,
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _codeController,
+                  keyboardType: TextInputType.number,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: '请输入验证码',
+                    hintStyle: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                    prefixIcon: Icon(
+                      Icons.sms,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
+                  ),
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Container(
-              height: 52,
-              decoration: BoxDecoration(
-                gradient: _codeCountdown
-                    ? null
-                    : LinearGradient(
-                        colors: [
-                          colorScheme.primary,
-                          colorScheme.primary.withValues(alpha: 0.8),
-                        ],
-                      ),
-                color: _codeCountdown
-                    ? (isDark
-                        ? Colors.white.withValues(alpha: 0.06)
-                        : Colors.black.withValues(alpha: 0.04))
-                    : null,
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: _codeCountdown ? null : _sendEmailCode,
-                  borderRadius: BorderRadius.circular(14),
-                  child: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      child: Text(
-                        _codeCountdown ? '${_countdownSeconds}s' : '获取验证码',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: _codeCountdown
-                              ? colorScheme.onSurfaceVariant
-                              : colorScheme.onPrimary,
+              Container(
+                width: 100,
+                height: 36,
+                margin: const EdgeInsets.only(right: 8),
+                child: _codeCountdown
+                    ? Center(
+                        child: Text(
+                          '${_countdownSeconds}s',
+                          style: TextStyle(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      )
+                    : ElevatedButton(
+                        onPressed: _sendCode,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryColor,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          padding: EdgeInsets.zero,
+                        ),
+                        child: const Text(
+                          '获取验证码',
+                          style: TextStyle(fontSize: 12),
                         ),
                       ),
-                    ),
-                  ),
-                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildInputField({
-    required TextEditingController controller,
-    required String hintText,
-    required IconData prefixIcon,
-    required bool isDark,
-    required ColorScheme colorScheme,
-    bool obscureText = false,
-    Widget? suffixIcon,
-    TextInputType? keyboardType,
-  }) {
-    return Container(
-      height: 52,
-      decoration: BoxDecoration(
-        color: isDark
-            ? Colors.white.withValues(alpha: 0.06)
-            : Colors.black.withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.08)
-              : Colors.black.withValues(alpha: 0.06),
-        ),
-      ),
-      child: TextField(
-        controller: controller,
-        obscureText: obscureText,
-        keyboardType: keyboardType,
-        style: TextStyle(fontSize: 15, color: colorScheme.onSurface),
-        decoration: InputDecoration(
-          hintText: hintText,
-          hintStyle: TextStyle(
-            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
-            fontSize: 14,
+  Widget _buildEmailLoginForm(
+    Color primaryColor,
+    Color surfaceContainerHighest,
+  ) {
+    return Column(
+      children: [
+        Container(
+          height: 52,
+          decoration: BoxDecoration(
+            color: surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(12),
           ),
-          prefixIcon: Icon(
-            prefixIcon,
-            color: colorScheme.primary.withValues(alpha: 0.7),
-            size: 22,
-          ),
-          suffixIcon: suffixIcon,
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 16,
+          child: TextField(
+            controller: _usernameController,
+            keyboardType: TextInputType.emailAddress,
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+            decoration: InputDecoration(
+              hintText: '请输入邮箱地址',
+              hintStyle: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+              prefixIcon: Icon(
+                Icons.email,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 16,
+              ),
+            ),
           ),
         ),
-      ),
+        const SizedBox(height: 16),
+        Container(
+          height: 52,
+          decoration: BoxDecoration(
+            color: surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _codeController,
+                  keyboardType: TextInputType.number,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: '请输入邮箱验证码',
+                    hintStyle: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                    prefixIcon: Icon(
+                      Icons.sms,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
+                  ),
+                ),
+              ),
+              Container(
+                width: 100,
+                height: 36,
+                margin: const EdgeInsets.only(right: 8),
+                child: _codeCountdown
+                    ? Center(
+                        child: Text(
+                          '${_countdownSeconds}s',
+                          style: TextStyle(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      )
+                    : ElevatedButton(
+                        onPressed: _sendEmailCode,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryColor,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          padding: EdgeInsets.zero,
+                        ),
+                        child: const Text(
+                          '获取验证码',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildLoginButton(ColorScheme colorScheme) {
-    return Container(
-      width: double.infinity,
-      height: 54,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [colorScheme.primary, colorScheme.tertiary],
+  Widget _buildPasswordLoginForm(Color surfaceContainerHighest) {
+    return Column(
+      children: [
+        Container(
+          height: 52,
+          decoration: BoxDecoration(
+            color: surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: TextField(
+            controller: _usernameController,
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+            decoration: InputDecoration(
+              hintText: '请输入手机号/账号/邮箱/ID号',
+              hintStyle: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+              prefixIcon: Icon(
+                Icons.person,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 16,
+              ),
+            ),
+          ),
         ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.primary.withValues(alpha: 0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+        const SizedBox(height: 16),
+        Container(
+          height: 52,
+          decoration: BoxDecoration(
+            color: surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: TextField(
+            controller: _passwordController,
+            obscureText: _obscurePassword,
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+            decoration: InputDecoration(
+              hintText: '请输入密码',
+              hintStyle: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+              prefixIcon: Icon(
+                Icons.lock,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                onPressed: () =>
+                    setState(() => _obscurePassword = !_obscurePassword),
+              ),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 16,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSocialIcon(IconData icon, String label) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return GestureDetector(
+      onTap: () {
+        // 社交登录功能
+      },
+      child: Column(
+        children: [
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(25),
+            ),
+            child: Icon(icon, color: colorScheme.onSurfaceVariant, size: 24),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
           ),
         ],
       ),
-      child: _isLoading
-          ? Center(
-              child: SizedBox(
-                width: 22,
-                height: 22,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.5,
-                  color: colorScheme.onPrimary,
-                ),
-              ),
-            )
-          : Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: _login,
-                borderRadius: BorderRadius.circular(16),
-                child: Center(
-                  child: Text(
-                    '登 录',
-                    style: TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.bold,
-                      color: colorScheme.onPrimary,
-                      letterSpacing: 6,
-                    ),
-                  ),
-                ),
-              ),
-            ),
     );
   }
-
-  Widget _buildForgotPassword(ColorScheme colorScheme) {
-    return Align(
-      alignment: Alignment.centerRight,
-      child: TextButton(
-        onPressed: () => Navigator.pushNamed(context, '/forget-password'),
-        child: Text(
-          '忘记密码？',
-          style: TextStyle(
-            color: colorScheme.primary,
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRegisterLink(ColorScheme colorScheme) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          '没有账号？',
-          style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
-        ),
-        TextButton(
-          onPressed: () => Navigator.pushNamed(context, '/email-register'),
-          child: Text(
-            '立即注册',
-            style: TextStyle(
-              color: colorScheme.primary,
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  // ==================== 以下为注释掉的登录方式 ====================
-
-  // // 手机号登录相关（已注释）
-  // // int _loginType = 0; // 0: 手机号登录, 1: 账号密码登录, 2: 邮箱登录
-  // // final _phoneController = TextEditingController();
-  // //
-  // // Future<void> _sendCode() async {
-  // //   final phone = _phoneController.text.trim();
-  // //   if (phone.isEmpty) {
-  // //     NotificationHelper.showWarning(message: '请输入手机号');
-  // //     return;
-  // //   }
-  // //   if (_codeCountdown) return;
-  // //   setState(() { _codeCountdown = true; });
-  // //   _startCountdown();
-  // //   final result = await AuthService.sendPhoneCode(phone);
-  // //   if (mounted) {
-  // //     NotificationHelper.showError(message: result['message']);
-  // //   }
-  // // }
-  // //
-  // // Widget _buildCodeLoginForm(Color primaryColor, Color surfaceContainerHighest) { ... }
-
-  // // 社交登录（已注释）
-  // // Widget _buildSocialIcon(IconData icon, String label) {
-  // //   final colorScheme = Theme.of(context).colorScheme;
-  // //   return GestureDetector(
-  // //     onTap: () { /* 社交登录功能 */ },
-  // //     child: Column(
-  // //       children: [
-  // //         Container(
-  // //           width: 50, height: 50,
-  // //           decoration: BoxDecoration(
-  // //             color: colorScheme.surfaceContainerHighest,
-  // //             borderRadius: BorderRadius.circular(25),
-  // //           ),
-  // //           child: Icon(icon, color: colorScheme.onSurfaceVariant, size: 24),
-  // //         ),
-  // //         const SizedBox(height: 8),
-  // //         Text(label, style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)),
-  // //       ],
-  // //     ),
-  // //   );
-  // // }
 }

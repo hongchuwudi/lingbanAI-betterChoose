@@ -120,12 +120,6 @@ class ChatService {
     await _loadSessionMessages(sessionId);
   }
 
-  Future<void> refreshCurrentSession() async {
-    if (_currentSessionId != null) {
-      await _loadSessionMessages(_currentSessionId!);
-    }
-  }
-
   Future<void> _loadSessionMessages(String sessionId) async {
     try {
       final token = await AuthService.getToken();
@@ -143,14 +137,13 @@ class ChatService {
         final List<dynamic> data = response.data['data'] ?? [];
         final messages = data.map((item) {
           return ChatMessage(
-            id: item['id']?.toString() ??
+            id:
+                item['id']?.toString() ??
                 DateTime.now().millisecondsSinceEpoch.toString(),
             content: item['content'] ?? '',
             imageUrls: item['imageUrls'] != null
                 ? List<String>.from(item['imageUrls'])
                 : null,
-            audioUrl: item['audioUrl'],
-            ttsAudioUrl: item['ttsAudioUrl'],
             isUser: item['role']?.toLowerCase() == 'user',
             timestamp: item['createdAt'] != null
                 ? DateTime.parse(item['createdAt'])
@@ -419,60 +412,9 @@ class ChatService {
     await _loadSessionsFromServer();
   }
 
-  Future<String?> synthesizeSpeech(String text) async {
-    try {
-      final token = await AuthService.getToken();
-      final response = await _dio.post(
-        '/ai/voice/synthesize-with-url',
-        data: {'text': text},
-        options: Options(
-          headers: {
-            if (token != null && token.isNotEmpty)
-              'Authorization': 'Bearer $token',
-          },
-        ),
-      );
-
-      if (response.statusCode == 200 && response.data != null) {
-        final data = response.data;
-        if (data is Map) {
-          if (data.containsKey('data') && data['data'] is Map) {
-            return data['data']['audioUrl'];
-          }
-          return data['audioUrl'];
-        }
-        return null;
-      } else {
-        print('语音合成失败: ${response.data}');
-        return null;
-      }
-    } catch (e) {
-      print('语音合成异常: $e');
-      return null;
-    }
-  }
-
   void dispose() {
     _cancelToken?.cancel('dispose');
     _cancelToken = null;
     _isCancelled = true;
-  }
-
-  Future<void> updateTtsUrl(String sessionId, String ttsAudioUrl) async {
-    try {
-      final token = await AuthService.getToken();
-      await _dio.post(
-        '/chat-memory/update-tts-url',
-        queryParameters: {'sessionId': sessionId, 'ttsAudioUrl': ttsAudioUrl},
-        options: Options(
-          headers: {
-            if (token != null && token.isNotEmpty)
-              'Authorization': 'Bearer $token',
-          },
-        ),
-      );
-    } catch (e) {
-      print('更新TTS URL异常: $e');
-    }
   }
 }

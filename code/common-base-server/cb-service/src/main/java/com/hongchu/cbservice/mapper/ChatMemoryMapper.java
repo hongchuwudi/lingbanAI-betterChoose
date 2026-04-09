@@ -33,13 +33,4 @@ public interface ChatMemoryMapper extends BaseMapper<ChatMemory> {
     
     @Delete("DELETE FROM spring_ai_chat_memory WHERE timestamp < NOW() - INTERVAL '${days} days'")
     void cleanOldRecords(@Param("days") int days);
-
-    @Select("SELECT id, conversation_id, content, type as role, timestamp as created_at " +
-            "FROM spring_ai_chat_memory WHERE conversation_id = #{sessionId} AND type = 'ASSISTANT' " +
-            "ORDER BY timestamp DESC LIMIT 1")
-    Map<String, Object> findLastAssistantMessage(@Param("sessionId") String sessionId);
-
-    @org.apache.ibatis.annotations.Update("UPDATE spring_ai_chat_memory SET content = #{content} " +
-            "WHERE id = #{id}")
-    void updateContentById(@Param("id") Object id, @Param("content") String content);
 }
