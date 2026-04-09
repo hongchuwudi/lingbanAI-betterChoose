@@ -1,4 +1,4 @@
-# Tomcat 服务器配置
+﻿# Tomcat 服务器配置
 server:
   port: 15555
 
@@ -9,13 +9,18 @@ spring:
     name: 关爱老年人
   # 软件环境-配置文件选择
   profiles:
-    active: dev # dev为开发模式
+    active: prod # dev为开发模式
   # mvc 配置
   mvc:
     static-path-pattern: /**
   # spring主配置
   main:
     allow-circular-references: true # 允许循环依赖
+  # spring security 配置
+  security:
+    user:
+      name: admin
+      password: ${hcprop.security.password:admin123}
   # 时间配置
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
@@ -96,18 +101,21 @@ spring:
       location: /tmp  # 临时文件存储路径
   # 邮件
   mail:
-    host: ${hcprop.mail.host}  # 以QQ邮箱为例
+    host: ${hcprop.mail.host}
     port: ${hcprop.mail.port}
-    username: ${hcprop.mail.username}  # 发件邮箱
-    password: ${hcprop.mail.password}  # 授权码，不是登录密码
+    username: ${hcprop.mail.username}
+    password: ${hcprop.mail.password}
     protocol: smtp
+    default-encoding: UTF-8
     properties:
       mail:
         smtp:
           auth: true
-          starttls:
+          ssl:
             enable: true
-            required: true
+          socketFactory:
+            class: javax.net.ssl.SSLSocketFactory
+            port: ${hcprop.mail.port}
 
 # MyBatis-Plus 配置
 mybatis-plus:

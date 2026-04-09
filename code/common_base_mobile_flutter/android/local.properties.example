@@ -1,0 +1,8 @@
+sdk.dir=/path/to/android/sdk
+flutter.sdk=/path/to/flutter
+flutter.buildMode=debug
+flutter.versionName=1.0.0
+flutter.versionCode=1
+
+# 百度地图 API Key
+baidu.map.api.key=YOUR_BAIDU_MAP_API_KEY

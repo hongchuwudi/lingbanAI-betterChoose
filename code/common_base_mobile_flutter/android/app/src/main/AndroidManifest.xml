@@ -1,10 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- AndroidManifest.xml - Flutter 应用清单文件 -->
+
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- ==================== 权限区域 ==================== -->
+
+    <!-- 网络权限：允许应用访问互联网，调用后端接口必需 -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- 相机权限：允许应用调用摄像头拍照（上传图片、体检报告） -->
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <!-- 读取外部存储权限：允许应用读取相册、文件（Android 12及以下） -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+
+    <!-- 写入外部存储权限：允许应用保存文件到手机（Android 12及以下） -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+    <!-- 读取图片媒体权限：Android 13+ 专用，读取相册图片 -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+
+    <!-- 读取音频媒体权限：Android 13+ 专用，读取音频文件 -->
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+
+    <!-- 读取视频媒体权限：Android 13+ 专用，读取视频文件 -->
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+
+    <!-- 录音权限：语音输入、语音消息功能需要 -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <!-- 通知权限：Android 13+ 需要，用于推送消息提醒 -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- 精确定位权限：SOS紧急求助、定位功能需要（GPS） -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
+    <!-- 粗略定位权限：SOS紧急求助、定位功能需要（网络定位） -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <!-- 震动权限：消息通知时的震动提醒 -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+
+    <!-- ==================== 应用主体配置 ==================== -->
+
     <application
         android:label="灵伴AI"
-        android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+
+        <!-- ==================== 主活动配置 ==================== -->
+
         <activity
-            android:name=".MainActivity"
+            android:name="com.example.common_base_mobile_flutter.MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
             android:taskAffinity=""
@@ -12,34 +64,46 @@
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize">
-            <!-- Specifies an Android theme to apply to this Activity as soon as
-                 the Android process has started. This theme is visible to the user
-                 while the Flutter UI initializes. After that, this theme continues
-                 to determine the Window background behind the Flutter UI. -->
+
+            <!-- 普通主题：Flutter 界面启动后使用的主题 -->
             <meta-data
-              android:name="io.flutter.embedding.android.NormalTheme"
-              android:resource="@style/NormalTheme"
-              />
+                android:name="io.flutter.embedding.android.NormalTheme"
+                android:resource="@style/NormalTheme" />
+
+            <!-- 启动器过滤器：让应用出现在手机桌面上 -->
             <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <!-- Don't delete the meta-data below.
-             This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
+
+        <!-- Flutter 引擎配置：指定 Flutter 嵌入器的版本 -->
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
-    </application>
-    <!-- Required to query activities that can process text, see:
-         https://developer.android.com/training/package-visibility and
-         https://developer.android.com/reference/android/content/Intent#ACTION_PROCESS_TEXT.
 
-         In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
+        <meta-data
+            android:name="com.baidu.lbsapi.API_KEY"
+            android:value="${baiduMapApiKey}" />
+
+    </application>
+
+    <!-- ==================== 包可见性查询 ==================== -->
+    <!-- 用于 Android 11+，允许应用查询系统中能处理文本的 Activity -->
     <queries>
         <intent>
-            <action android:name="android.intent.action.PROCESS_TEXT"/>
-            <data android:mimeType="text/plain"/>
+            <action android:name="android.intent.action.PROCESS_TEXT" />
+            <data android:mimeType="text/plain" />
+        </intent>
+         <!-- 允许查询所有浏览器 -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="http" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
         </intent>
     </queries>
+
 </manifest>

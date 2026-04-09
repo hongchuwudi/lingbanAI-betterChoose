@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/widgets.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import '../config/app_config.dart';
 import '../services/auth_service.dart';
@@ -17,20 +18,25 @@ typedef WebSocketConnectionCallback =
     void Function(WebSocketConnectionState state);
 typedef WebSocketMessageCallback = void Function(Map<String, dynamic> message);
 
-class WebSocketService {
+class WebSocketService with WidgetsBindingObserver {
   static final WebSocketService _instance = WebSocketService._internal();
   factory WebSocketService() => _instance;
-  WebSocketService._internal();
+  WebSocketService._internal() {
+    WidgetsBinding.instance.addObserver(this);
+  }
 
   final AudioService _audioService = AudioService();
   WebSocketChannel? _channel;
   StreamSubscription? _subscription;
   bool _isConnected = false;
+  bool _intentionalDisconnect = false; // 标记是否主动断开，避免触发重连
   Timer? _heartbeatTimer;
+  Timer? _heartbeatTimeoutTimer; // 心跳超时检测
   Timer? _reconnectTimer;
   int _reconnectAttempts = 0;
-  static const int _maxReconnectAttempts = 5;
-  static const Duration _reconnectDelay = Duration(seconds: 3);
+  static const int _maxReconnectAttempts = 10;
+  static const Duration _reconnectDelay = Duration(seconds: 5);
+  static const Duration _heartbeatTimeout = Duration(seconds: 60); // 60s无pong则重连
 
   WebSocketConnectionState _connectionState =
       WebSocketConnectionState.disconnected;
@@ -91,6 +97,7 @@ class WebSocketService {
     }
 
     try {
+      _intentionalDisconnect = false;
       _notifyConnectionState(WebSocketConnectionState.connecting);
 
       final token = await AuthService.getToken();
@@ -152,13 +159,16 @@ class WebSocketService {
 
   void refreshConnection() {
     print('WebSocket 刷新连接...');
+    _intentionalDisconnect = false;
     disconnect();
     _reconnectAttempts = 0;
     connect(forceReconnect: true);
   }
 
   void disconnect() {
+    _intentionalDisconnect = true;
     _heartbeatTimer?.cancel();
+    _heartbeatTimeoutTimer?.cancel();
     _reconnectTimer?.cancel();
     _subscription?.cancel();
     _channel?.sink.close();
@@ -187,7 +197,9 @@ class WebSocketService {
           print('WebSocket 连接成功: ${data['data']}');
           break;
         case 'pong':
-          print('收到心跳响应');
+          // 收到pong，取消超时计时器，连接正常
+          _heartbeatTimeoutTimer?.cancel();
+          print('收到心跳响应，连接正常');
           break;
         case 'system_notification':
           _handleSystemNotification(data['data']);
@@ -360,26 +372,60 @@ class WebSocketService {
 
   void _onError(dynamic error) {
     _isConnected = false;
+    _heartbeatTimer?.cancel();
+    _heartbeatTimeoutTimer?.cancel();
     _notifyConnectionState(WebSocketConnectionState.disconnected);
     print('WebSocket 错误: $error');
+    // 修复：错误时触发重连（之前此处缺少重连逻辑）
+    if (!_intentionalDisconnect) {
+      _scheduleReconnect();
+    }
   }
 
   void _onDone() {
     _isConnected = false;
     _heartbeatTimer?.cancel();
+    _heartbeatTimeoutTimer?.cancel();
     _reconnectTimer?.cancel();
     _notifyConnectionState(WebSocketConnectionState.disconnected);
     print('WebSocket 连接已关闭');
+    // 非主动断开时自动重连
+    if (!_intentionalDisconnect) {
+      _scheduleReconnect();
+    }
   }
 
   void _startHeartbeat() {
     _heartbeatTimer?.cancel();
+    _heartbeatTimeoutTimer?.cancel();
     _heartbeatTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (!_isConnected) return;
       sendMessage({
         'type': 'heartbeat',
         'timestamp': DateTime.now().millisecondsSinceEpoch,
       });
+      // 发送心跳后启动超时检测，60s内收不到pong则重连
+      _heartbeatTimeoutTimer?.cancel();
+      _heartbeatTimeoutTimer = Timer(_heartbeatTimeout, () {
+        print('WebSocket 心跳超时，主动重连...');
+        refreshConnection();
+      });
     });
+  }
+
+  /// 监听应用生命周期，后台→前台时检查并恢复连接
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      print('App 回到前台，检查 WebSocket 连接状态...');
+      if (!_isConnected && !_intentionalDisconnect) {
+        _reconnectAttempts = 0;
+        connect(forceReconnect: true);
+      }
+    } else if (state == AppLifecycleState.paused) {
+      print('App 进入后台，暂停心跳检测');
+      _heartbeatTimeoutTimer?.cancel();
+    }
   }
 
   void _handleError(dynamic error) {

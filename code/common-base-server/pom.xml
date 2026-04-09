@@ -47,12 +47,15 @@
         <knife4j.v>4.4.0</knife4j.v>                                <!-- Knife4j API文档版本 -->
         <hutool.v>5.8.26</hutool.v>                                 <!-- Hutool工具包版本 -->
         <zxing.v>3.5.1</zxing.v>                                    <!-- 二维码生成库版本 -->
-        <spring-ai.v>1.0.0</spring-ai.v>                            <!-- Spring AI 正式版 -->
+        <spring-ai.v>1.1.0</spring-ai.v>                            <!-- Spring AI 正式版 -->
         <jmail.v>2.0.1</jmail.v>                                    <!-- jakarta email -->
         <commons-lang3.v>3.14.0</commons-lang3.v>                   <!-- commons-lang3-->
         <jackson.v>2.15.4</jackson.v>                               <!-- Jackson版本 -->
-        <spring-ai-ali.v>1.1.0.0-RC2</spring-ai-ali.v>              <!-- Spring AI 阿里云版本 -->
+        <spring-ai-ali.v>1.1.2.1</spring-ai-ali.v>              <!-- Spring AI 阿里云版本 -->
+        <dashscope-sdk.v>2.22.4</dashscope-sdk.v>               <!-- DashScope原生SDK版本 -->
         <pdfbox.v>2.0.29</pdfbox.v>                                 <!--  PDFBox版本 -->
+        <httpclient.v>4.5.13</httpclient.v>                         <!-- HTTP客户端版本 -->
+        <org-json.v>20230618</org-json.v>                           <!-- JSON解析库版本 -->
 
         <!-- 3. Spring Boot相关版本 -->
         <spring-boot.version>3.5.7</spring-boot.version>            <!-- Spring Boot版本 已统一 -->
@@ -109,19 +112,24 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-<!--            &lt;!&ndash; Spring AI Alibaba Agent Framework &ndash;&gt;-->
-<!--            <dependency>-->
-<!--                <groupId>com.alibaba.cloud.ai</groupId>-->
-<!--                <artifactId>spring-ai-alibaba-agent-framework</artifactId>-->
-<!--                <version>${spring-ai-ali.v}</version>-->
-<!--            </dependency>-->
-
-<!--            &lt;!&ndash; DashScope ChatModel 支持（如果使用其他模型，请跳转 Spring AI 文档选择对应的 starter） &ndash;&gt;-->
-<!--            <dependency>-->
-<!--                <groupId>com.alibaba.cloud.ai</groupId>-->
-<!--                <artifactId>spring-ai-alibaba-starter-dashscope</artifactId>-->
-<!--                <version>${spring-ai-ali.v}</version>-->
-<!--            </dependency>-->
+            <!-- Spring AI Alibaba DashScope Starter -->
+            <dependency>
+                <groupId>com.alibaba.cloud.ai</groupId>
+                <artifactId>spring-ai-alibaba-starter-dashscope</artifactId>
+                <version>${spring-ai-ali.v}</version>
+            </dependency>
+            <!-- DashScope原生SDK (语音合成需要) -->
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>dashscope-sdk-java</artifactId>
+                <version>${dashscope-sdk.v}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-simple</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
 
             <!-- ============ 数据库相关 ============ -->
             <!-- MySQL驱动核心依赖 -->
@@ -269,6 +277,35 @@
                 <artifactId>pdfbox</artifactId>
                 <version>${pdfbox.v}</version>
             </dependency>
+            <!-- HTTP客户端 (语音服务需要) -->
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpclient</artifactId>
+                <version>${httpclient.v}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpmime</artifactId>
+                <version>${httpclient.v}</version>
+            </dependency>
+            <!-- JSON解析 (语音服务需要) -->
+            <dependency>
+                <groupId>org.json</groupId>
+                <artifactId>json</artifactId>
+                <version>${org-json.v}</version>
+            </dependency>
+
+            <!-- ============ JSON Schema 依赖版本统一 ============ -->
+            <dependency>
+                <groupId>com.github.victools</groupId>
+                <artifactId>jsonschema-generator</artifactId>
+                <version>4.38.0</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.victools</groupId>
+                <artifactId>jsonschema-module-jackson</artifactId>
+                <version>4.38.0</version>
+            </dependency>
 
             <!-- ============ 测试相关依赖 ============ -->
             <!-- JUnit测试框架 -->
@@ -312,9 +349,9 @@
                     </configuration>
                 </plugin>
 
-                <!-- Spring Boot Maven插件 -->
-                <plugin>
-                    <groupId>org.springframework.boot</groupId>         <!-- Spring Boot组织 -->
+            <!-- Spring Boot Maven插件 -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>         <!-- Spring Boot组织 -->
                     <artifactId>spring-boot-maven-plugin</artifactId>   <!-- Spring Boot打包插件 -->
                     <version>${spring-boot.version}</version>           <!-- 版本号 已修正: 统一使用3.5.7 -->
                     <configuration>

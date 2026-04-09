@@ -42,18 +42,20 @@ class FamilyMemberCard extends StatelessWidget {
                         member.avatar!,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
-                          return Icon(
-                            Icons.person,
-                            size: 30,
-                            color: colorScheme.onSurfaceVariant,
+                          return ClipOval(
+                            child: Image.asset(
+                              'assets/choose_youths.jpeg',
+                              fit: BoxFit.cover,
+                            ),
                           );
                         },
                       ),
                     )
-                  : Icon(
-                      Icons.person,
-                      size: 30,
-                      color: colorScheme.onSurfaceVariant,
+                  : ClipOval(
+                      child: Image.asset(
+                        'assets/choose_youths.jpeg',
+                        fit: BoxFit.cover,
+                      ),
                     ),
             ),
             const SizedBox(height: 8),

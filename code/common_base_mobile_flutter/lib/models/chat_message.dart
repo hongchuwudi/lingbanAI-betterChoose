@@ -4,6 +4,8 @@ class ChatMessage {
   final String id;
   final String content;
   final List<String>? imageUrls;
+  final String? audioUrl;
+  final String? ttsAudioUrl;
   final bool isUser;
   final DateTime timestamp;
   final bool isStreaming;
@@ -12,16 +14,20 @@ class ChatMessage {
     String? id,
     required this.content,
     this.imageUrls,
+    this.audioUrl,
+    this.ttsAudioUrl,
     required this.isUser,
     DateTime? timestamp,
     this.isStreaming = false,
-  }) : id = id ?? const Uuid().v4(),
-       timestamp = timestamp ?? DateTime.now();
+  })  : id = id ?? const Uuid().v4(),
+        timestamp = timestamp ?? DateTime.now();
 
   ChatMessage copyWith({
     String? id,
     String? content,
     List<String>? imageUrls,
+    String? audioUrl,
+    String? ttsAudioUrl,
     bool? isUser,
     DateTime? timestamp,
     bool? isStreaming,
@@ -30,6 +36,8 @@ class ChatMessage {
       id: id ?? this.id,
       content: content ?? this.content,
       imageUrls: imageUrls ?? this.imageUrls,
+      audioUrl: audioUrl ?? this.audioUrl,
+      ttsAudioUrl: ttsAudioUrl ?? this.ttsAudioUrl,
       isUser: isUser ?? this.isUser,
       timestamp: timestamp ?? this.timestamp,
       isStreaming: isStreaming ?? this.isStreaming,
@@ -41,6 +49,8 @@ class ChatMessage {
       'id': id,
       'content': content,
       'imageUrls': imageUrls,
+      'audioUrl': audioUrl,
+      'ttsAudioUrl': ttsAudioUrl,
       'isUser': isUser,
       'timestamp': timestamp.toIso8601String(),
       'isStreaming': isStreaming,
@@ -54,6 +64,8 @@ class ChatMessage {
       imageUrls: json['imageUrls'] != null
           ? List<String>.from(json['imageUrls'])
           : null,
+      audioUrl: json['audioUrl'],
+      ttsAudioUrl: json['ttsAudioUrl'],
       isUser: json['isUser'],
       timestamp: DateTime.parse(json['timestamp']),
       isStreaming: json['isStreaming'] ?? false,
@@ -74,10 +86,10 @@ class ChatSession {
     List<ChatMessage>? messages,
     DateTime? createdAt,
     DateTime? updatedAt,
-  }) : id = id ?? const Uuid().v4(),
-       messages = messages ?? [],
-       createdAt = createdAt ?? DateTime.now(),
-       updatedAt = updatedAt ?? DateTime.now();
+  })  : id = id ?? const Uuid().v4(),
+        messages = messages ?? [],
+        createdAt = createdAt ?? DateTime.now(),
+        updatedAt = updatedAt ?? DateTime.now();
 
   ChatSession copyWith({
     String? id,
@@ -111,8 +123,8 @@ class ChatSession {
       title: json['title'],
       messages: json['messages'] != null
           ? (json['messages'] as List)
-                .map((m) => ChatMessage.fromJson(m))
-                .toList()
+              .map((m) => ChatMessage.fromJson(m))
+              .toList()
           : [],
       createdAt: DateTime.parse(json['createdAt']),
       updatedAt: DateTime.parse(json['updatedAt']),

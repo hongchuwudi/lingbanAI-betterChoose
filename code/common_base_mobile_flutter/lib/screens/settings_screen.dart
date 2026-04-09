@@ -300,13 +300,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            colorScheme.primaryContainer.withValues(alpha: 0.2),
+            colorScheme.surface,
+          ],
+        ),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: colorScheme.primary.withValues(alpha: 0.08),
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: colorScheme.shadow.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+            color: colorScheme.primary.withValues(alpha: 0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -400,9 +411,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return ListTile(
       leading: Icon(icon, color: colorScheme.primary),
       title: Text(title, style: TextStyle(color: colorScheme.onSurface)),
-      trailing: isSelected
-          ? Icon(Icons.check, color: colorScheme.primary)
-          : null,
+      trailing:
+          isSelected ? Icon(Icons.check, color: colorScheme.primary) : null,
       onTap: onTap,
     );
   }

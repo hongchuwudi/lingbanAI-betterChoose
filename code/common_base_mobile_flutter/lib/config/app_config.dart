@@ -7,13 +7,13 @@ class AppConfig {
 
   /// API基础URL - 后端接口地址，开发环境使用本地地址
   /// Android模拟器请使用 10.0.2.2，真机请使用电脑局域网IP，Windows桌面版使用 localhost
-  // static const String apiBaseUrl = 'http://10.0.2.2:15555';
-  static const String apiBaseUrl = 'http://10.0.2.2:15555';
+  // static const String apiBaseUrl = 'https://lingban.hongchu.xyz';
+  static const String apiBaseUrl = 'https://lingban.hongchu.xyz';
 
   /// WebSocket基础URL - WebSocket连接地址
   /// Android模拟器请使用 10.0.2.2，真机请使用电脑局域网IP，Windows桌面版使用 localhost
-  // static const String wsBaseUrl = 'ws://10.0.2.2:15555';
-  static const String wsBaseUrl = 'ws://10.0.2.2:15555';
+  // static const String wsBaseUrl = 'wss://lingban.hongchu.xyz';
+  static const String wsBaseUrl = 'wss://lingban.hongchu.xyz';
 
   /// 应用版本号 - 用于显示在启动页和关于页面
   static const String appVersion = '1.0.0';

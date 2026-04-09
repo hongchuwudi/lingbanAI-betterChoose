@@ -35,6 +35,12 @@ public class ChatMemoryVO {
     /** 图片URL列表 */
     private List<String> imageUrls;
     
+    /** 用户语音URL（原始录音） */
+    private String audioUrl;
+    
+    /** AI语音URL（TTS合成） */
+    private String ttsAudioUrl;
+    
     /** AI模型名称 */
     private String aiModel;
     
