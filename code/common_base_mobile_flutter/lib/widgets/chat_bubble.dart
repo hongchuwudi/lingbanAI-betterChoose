@@ -4,17 +4,75 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:intl/intl.dart';
 import 'package:photo_view/photo_view.dart';
+import 'package:audioplayers/audioplayers.dart';
 import '../models/chat_message.dart';
 
-class ChatBubble extends StatelessWidget {
+class ChatBubble extends StatefulWidget {
   final ChatMessage message;
   final bool showTimestamp;
+  final Future<String?> Function(String)? onSynthesizeSpeech;
 
   const ChatBubble({
     super.key,
     required this.message,
     this.showTimestamp = false,
+    this.onSynthesizeSpeech,
   });
+
+  @override
+  State<ChatBubble> createState() => _ChatBubbleState();
+}
+
+class _ChatBubbleState extends State<ChatBubble> {
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  bool _isPlaying = false;
+  bool _isSynthesizing = false;
+  String? _ttsAudioUrl;
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
+  }
+
+  Future<void> _playAudio(String url) async {
+    if (_isPlaying) {
+      await _audioPlayer.stop();
+      setState(() => _isPlaying = false);
+      return;
+    }
+
+    setState(() => _isPlaying = true);
+    await _audioPlayer.play(UrlSource(url));
+
+    _audioPlayer.onPlayerComplete.listen((_) {
+      if (mounted) {
+        setState(() => _isPlaying = false);
+      }
+    });
+  }
+
+  Future<void> _synthesizeAndPlay() async {
+    if (widget.onSynthesizeSpeech == null) return;
+
+    if (_ttsAudioUrl != null) {
+      await _playAudio(_ttsAudioUrl!);
+      return;
+    }
+
+    setState(() => _isSynthesizing = true);
+    try {
+      final url = await widget.onSynthesizeSpeech!(widget.message.content);
+      if (url != null) {
+        _ttsAudioUrl = url;
+        await _playAudio(url);
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSynthesizing = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,15 +80,15 @@ class ChatBubble extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Column(
-      crossAxisAlignment: message.isUser
+      crossAxisAlignment: widget.message.isUser
           ? CrossAxisAlignment.end
           : CrossAxisAlignment.start,
       children: [
-        if (showTimestamp)
+        if (widget.showTimestamp)
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: Text(
-              _formatTime(message.timestamp),
+              _formatTime(widget.message.timestamp),
               style: TextStyle(
                 fontSize: 12,
                 color: colorScheme.onSurfaceVariant.withOpacity(0.6),
@@ -38,12 +96,12 @@ class ChatBubble extends StatelessWidget {
             ),
           ),
         Row(
-          mainAxisAlignment: message.isUser
+          mainAxisAlignment: widget.message.isUser
               ? MainAxisAlignment.end
               : MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            if (!message.isUser) ...[
+            if (!widget.message.isUser) ...[
               _buildAvatar(colorScheme, isDark),
               const SizedBox(width: 8),
             ],
@@ -57,18 +115,20 @@ class ChatBubble extends StatelessWidget {
                   vertical: 12,
                 ),
                 decoration: BoxDecoration(
-                  color: message.isUser
+                  color: widget.message.isUser
                       ? colorScheme.primary
                       : isDark
-                      ? colorScheme.surfaceContainerHighest
-                      : Colors.grey.shade100,
+                          ? colorScheme.surfaceContainerHighest
+                          : Colors.grey.shade100,
                   borderRadius: BorderRadius.only(
                     topLeft: const Radius.circular(20),
                     topRight: const Radius.circular(20),
-                    bottomLeft: Radius.circular(message.isUser ? 20 : 4),
-                    bottomRight: Radius.circular(message.isUser ? 4 : 20),
+                    bottomLeft: Radius.circular(widget.message.isUser ? 20 : 4),
+                    bottomRight: Radius.circular(
+                      widget.message.isUser ? 4 : 20,
+                    ),
                   ),
-                  boxShadow: message.isUser
+                  boxShadow: widget.message.isUser
                       ? null
                       : [
                           BoxShadow(
@@ -81,15 +141,22 @@ class ChatBubble extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (message.imageUrls != null &&
-                        message.imageUrls!.isNotEmpty)
+                    if (widget.message.imageUrls != null &&
+                        widget.message.imageUrls!.isNotEmpty)
                       _buildImages(context),
-                    if (message.content.isEmpty && message.isStreaming)
+                    if (widget.message.audioUrl != null)
+                      _buildAudioButton(
+                        widget.message.audioUrl!,
+                        colorScheme,
+                        isUser: true,
+                      ),
+                    if (widget.message.content.isEmpty &&
+                        widget.message.isStreaming)
                       _buildThinkingIndicator(colorScheme)
-                    else if (message.content.isNotEmpty)
-                      message.isUser
+                    else if (widget.message.content.isNotEmpty)
+                      widget.message.isUser
                           ? Text(
-                              message.content,
+                              widget.message.content,
                               style: TextStyle(
                                 fontSize: 15,
                                 color: colorScheme.onPrimary,
@@ -97,7 +164,7 @@ class ChatBubble extends StatelessWidget {
                               ),
                             )
                           : MarkdownBody(
-                              data: message.content,
+                              data: widget.message.content,
                               selectable: true,
                               styleSheet: MarkdownStyleSheet(
                                 p: TextStyle(
@@ -155,16 +222,17 @@ class ChatBubble extends StatelessWidget {
                                 ),
                                 tableBody: TextStyle(fontSize: 14),
                               ),
-                              onTapLink: (text, href, title) {
-                                // 可以在这里处理链接点击
-                              },
+                              onTapLink: (text, href, title) {},
                             ),
-                    if (message.isStreaming) _buildTypingIndicator(colorScheme),
+                    if (widget.message.isStreaming)
+                      _buildTypingIndicator(colorScheme),
                   ],
                 ),
               ),
             ),
-            if (message.isUser) ...[
+            if (!widget.message.isUser && widget.message.content.isNotEmpty)
+              _buildTTSButton(colorScheme),
+            if (widget.message.isUser) ...[
               const SizedBox(width: 8),
               _buildAvatar(colorScheme, isDark),
             ],
@@ -174,23 +242,114 @@ class ChatBubble extends StatelessWidget {
     );
   }
 
+  Widget _buildAudioButton(
+    String url,
+    ColorScheme colorScheme, {
+    bool isUser = false,
+  }) {
+    return GestureDetector(
+      onTap: () => _playAudio(url),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isUser
+              ? colorScheme.onPrimary.withOpacity(0.2)
+              : colorScheme.primaryContainer.withOpacity(0.3),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              _isPlaying ? Icons.stop : Icons.play_arrow,
+              size: 20,
+              color: isUser ? colorScheme.onPrimary : colorScheme.primary,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              _isPlaying ? '停止' : '播放语音',
+              style: TextStyle(
+                fontSize: 13,
+                color: isUser ? colorScheme.onPrimary : colorScheme.primary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTTSButton(ColorScheme colorScheme) {
+    if (widget.message.ttsAudioUrl != null) {
+      return Padding(
+        padding: const EdgeInsets.only(left: 4),
+        child: GestureDetector(
+          onTap: () => _playAudio(widget.message.ttsAudioUrl!),
+          child: Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerHighest,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              _isPlaying ? Icons.stop : Icons.volume_up,
+              size: 18,
+              color: colorScheme.primary,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(left: 4),
+      child: GestureDetector(
+        onTap: _isSynthesizing ? null : _synthesizeAndPlay,
+        child: Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerHighest,
+            shape: BoxShape.circle,
+          ),
+          child: _isSynthesizing
+              ? SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      colorScheme.primary,
+                    ),
+                  ),
+                )
+              : Icon(
+                  Icons.volume_up_outlined,
+                  size: 18,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildAvatar(ColorScheme colorScheme, bool isDark) {
     return Container(
       width: 32,
       height: 32,
       decoration: BoxDecoration(
-        color: message.isUser
+        color: widget.message.isUser
             ? colorScheme.primaryContainer
             : colorScheme.secondaryContainer,
         shape: BoxShape.circle,
       ),
-      child: Icon(
-        message.isUser ? Icons.person : Icons.smart_toy,
-        size: 18,
-        color: message.isUser
-            ? colorScheme.onPrimaryContainer
-            : colorScheme.onSecondaryContainer,
-      ),
+      child: widget.message.isUser
+          ? Icon(Icons.person, size: 18, color: colorScheme.onPrimaryContainer)
+          : ClipOval(
+              child: Image.asset('assets/ai_chat_logo.png', fit: BoxFit.cover),
+            ),
     );
   }
 
@@ -198,7 +357,7 @@ class ChatBubble extends StatelessWidget {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
-      children: message.imageUrls!.map((url) {
+      children: widget.message.imageUrls!.map((url) {
         return GestureDetector(
           onTap: () => _showImagePreview(context, url),
           child: ClipRRect(

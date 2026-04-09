@@ -5,24 +5,38 @@ import '../utils/http_interceptor.dart';
 
 class HealthService {
   static Future<ApiResponse<Map<String, dynamic>>> getDashboard() async {
-    final response = await HttpInterceptorManager().interceptor
+    final response = await HttpInterceptorManager()
+        .interceptor
         .get<Map<String, dynamic>>(path: '/health/dashboard');
 
     return response;
   }
 
+  static Future<ApiResponse<Map<String, dynamic>>> getChildElderlyDashboard(
+    String elderlyProfileId,
+  ) async {
+    final response =
+        await HttpInterceptorManager().interceptor.get<Map<String, dynamic>>(
+      path: '/health/child/elderly-dashboard',
+      queryParameters: {'elderlyProfileId': elderlyProfileId},
+    );
+
+    return response;
+  }
+
   static Future<ApiResponse<List<dynamic>>> getAlerts({int status = 0}) async {
-    final response = await HttpInterceptorManager().interceptor
-        .get<List<dynamic>>(
-          path: '/health/alerts',
-          queryParameters: {'status': status},
-        );
+    final response =
+        await HttpInterceptorManager().interceptor.get<List<dynamic>>(
+      path: '/health/alerts',
+      queryParameters: {'status': status},
+    );
 
     return response;
   }
 
   static Future<ApiResponse<List<dynamic>>> getMedicationToday() async {
-    final response = await HttpInterceptorManager().interceptor
+    final response = await HttpInterceptorManager()
+        .interceptor
         .get<List<dynamic>>(path: '/user/medication/today');
 
     return response;
@@ -31,11 +45,11 @@ class HealthService {
   static Future<ApiResponse<Map<String, dynamic>>> recordMedication(
     int recordId,
   ) async {
-    final response = await HttpInterceptorManager().interceptor
-        .post<Map<String, dynamic>>(
-          path: '/user/medication/check-in/$recordId',
-          data: {},
-        );
+    final response =
+        await HttpInterceptorManager().interceptor.post<Map<String, dynamic>>(
+      path: '/user/medication/check-in/$recordId',
+      data: {},
+    );
 
     return response;
   }
@@ -56,11 +70,11 @@ class HealthService {
     String indicatorCode, {
     int days = 7,
   }) async {
-    final response = await HttpInterceptorManager().interceptor
-        .get<List<dynamic>>(
-          path: '/health/trend',
-          queryParameters: {'indicatorCode': indicatorCode, 'days': days},
-        );
+    final response =
+        await HttpInterceptorManager().interceptor.get<List<dynamic>>(
+      path: '/health/trend',
+      queryParameters: {'indicatorCode': indicatorCode, 'days': days},
+    );
 
     return response;
   }
@@ -69,7 +83,8 @@ class HealthService {
     required String filePath,
     required String fileName,
   }) async {
-    final response = await HttpInterceptorManager().interceptor
+    final response = await HttpInterceptorManager()
+        .interceptor
         .uploadMultipart<Map<String, dynamic>>(
           path: '/ai/parse-health-document',
           filePath: filePath,
@@ -98,7 +113,8 @@ class HealthService {
     required List<int> bytes,
     required String fileName,
   }) async {
-    final response = await HttpInterceptorManager().interceptor
+    final response = await HttpInterceptorManager()
+        .interceptor
         .uploadMultipartBytes<Map<String, dynamic>>(
           path: '/ai/parse-health-document',
           bytes: bytes,
@@ -126,7 +142,8 @@ class HealthService {
   static Future<ApiResponse<HealthParseRecord>> getParseRecord(
     int recordId,
   ) async {
-    final response = await HttpInterceptorManager().interceptor
+    final response = await HttpInterceptorManager()
+        .interceptor
         .get<Map<String, dynamic>>(path: '/ai/parse-record/$recordId');
 
     if (response.isSuccess && response.data != null) {
@@ -150,7 +167,8 @@ class HealthService {
     required String filePath,
     required String fileName,
   }) async {
-    final response = await HttpInterceptorManager().interceptor
+    final response = await HttpInterceptorManager()
+        .interceptor
         .uploadMultipart<List<dynamic>>(
           path: '/ai/parse-health-document',
           filePath: filePath,
@@ -178,11 +196,12 @@ class HealthService {
   }
 
   static Future<ApiResponse<List<ParsedHealthIndicator>>>
-  parseHealthDocumentBytes({
+      parseHealthDocumentBytes({
     required List<int> bytes,
     required String fileName,
   }) async {
-    final response = await HttpInterceptorManager().interceptor
+    final response = await HttpInterceptorManager()
+        .interceptor
         .uploadMultipartBytes<List<dynamic>>(
           path: '/ai/parse-health-document',
           bytes: bytes,
@@ -212,13 +231,13 @@ class HealthService {
   static Future<ApiResponse<HealthAnalysisResponse>> analyzeHealth(
     int parseRecordId,
   ) async {
-    final response = await HttpInterceptorManager().interceptor
-        .post<Map<String, dynamic>>(
-          path: '/ai/analyze-health/$parseRecordId',
-          data: {},
-          connectTimeout: const Duration(seconds: 60),
-          receiveTimeout: const Duration(seconds: 60),
-        );
+    final response =
+        await HttpInterceptorManager().interceptor.post<Map<String, dynamic>>(
+              path: '/ai/analyze-health/$parseRecordId',
+              data: {},
+              connectTimeout: const Duration(seconds: 60),
+              receiveTimeout: const Duration(seconds: 60),
+            );
 
     if (response.isSuccess && response.data != null) {
       return ApiResponse<HealthAnalysisResponse>(
@@ -240,7 +259,8 @@ class HealthService {
   static Future<ApiResponse<HealthAnalysisResponse>> getAnalysisRecord(
     int analysisId,
   ) async {
-    final response = await HttpInterceptorManager().interceptor
+    final response = await HttpInterceptorManager()
+        .interceptor
         .get<Map<String, dynamic>>(path: '/ai/analysis-record/$analysisId');
 
     if (response.isSuccess && response.data != null) {
@@ -264,15 +284,14 @@ class HealthService {
     int page = 1,
     int size = 10,
   }) async {
-    final response = await HttpInterceptorManager().interceptor
-        .get<Map<String, dynamic>>(
-          path: '/ai/parse-record-list',
-          queryParameters: {'page': page, 'size': size},
-        );
+    final response =
+        await HttpInterceptorManager().interceptor.get<Map<String, dynamic>>(
+      path: '/ai/parse-record-list',
+      queryParameters: {'page': page, 'size': size},
+    );
 
     if (response.isSuccess && response.data != null) {
-      final records =
-          (response.data!['records'] as List<dynamic>?)
+      final records = (response.data!['records'] as List<dynamic>?)
               ?.map(
                 (json) =>
                     HealthParseRecord.fromJson(json as Map<String, dynamic>),
@@ -296,16 +315,15 @@ class HealthService {
   }
 
   static Future<ApiResponse<List<HealthAnalysisResponse>>>
-  getAnalysisRecordList({int page = 1, int size = 10}) async {
-    final response = await HttpInterceptorManager().interceptor
-        .get<Map<String, dynamic>>(
-          path: '/ai/analysis-record-list',
-          queryParameters: {'page': page, 'size': size},
-        );
+      getAnalysisRecordList({int page = 1, int size = 10}) async {
+    final response =
+        await HttpInterceptorManager().interceptor.get<Map<String, dynamic>>(
+      path: '/ai/analysis-record-list',
+      queryParameters: {'page': page, 'size': size},
+    );
 
     if (response.isSuccess && response.data != null) {
-      final records =
-          (response.data!['records'] as List<dynamic>?)
+      final records = (response.data!['records'] as List<dynamic>?)
               ?.map(
                 (json) => HealthAnalysisResponse.fromJson(
                   json as Map<String, dynamic>,
@@ -332,10 +350,10 @@ class HealthService {
   static Future<ApiResponse<HealthAnalysisResponse>> getAnalysisByParseRecordId(
     int parseRecordId,
   ) async {
-    final response = await HttpInterceptorManager().interceptor
-        .get<Map<String, dynamic>>(
-          path: '/ai/analysis-by-parse/$parseRecordId',
-        );
+    final response =
+        await HttpInterceptorManager().interceptor.get<Map<String, dynamic>>(
+              path: '/ai/analysis-by-parse/$parseRecordId',
+            );
 
     if (response.isSuccess && response.data != null) {
       return ApiResponse<HealthAnalysisResponse>(
@@ -477,7 +495,8 @@ class HealthVideoService {
     int page = 1,
     int size = 10,
   }) async {
-    final response = await HttpInterceptorManager().interceptor
+    final response = await HttpInterceptorManager()
+        .interceptor
         .get<List<dynamic>>(path: '/health-video/list?page=$page&size=$size');
 
     if (response.isSuccess && response.data != null) {
@@ -501,7 +520,8 @@ class HealthVideoService {
   }
 
   static Future<ApiResponse<HealthVideo>> getVideoById(int id) async {
-    final response = await HttpInterceptorManager().interceptor
+    final response = await HttpInterceptorManager()
+        .interceptor
         .get<Map<String, dynamic>>(path: '/health-video/$id');
 
     if (response.isSuccess && response.data != null) {

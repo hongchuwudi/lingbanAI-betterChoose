@@ -43,11 +43,15 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
     });
     _startCountdown();
 
-    final result = await AuthService.sendEmailCode(email);
+    final result = await AuthService.sendEmailCode(email, 'reset_pwd');
 
     //  添加 mounted 检查
     if (mounted) {
-      NotificationHelper.showError(message: result['message']);
+      if (result['success'] == true) {
+        NotificationHelper.showSuccess(message: result['message']);
+      } else {
+        NotificationHelper.showError(message: result['message']);
+      }
     }
   }
 

@@ -65,9 +65,8 @@ class _ChildHealthScreenState extends State<ChildHealthScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark
-          ? const Color(0xFF1A1A2E)
-          : const Color(0xFFF8F9FA),
+      backgroundColor:
+          isDark ? const Color(0xFF1A1A2E) : const Color(0xFFF8F9FA),
       body: Column(
         children: [
           _buildHeader(isDark, colorScheme),
@@ -78,18 +77,22 @@ class _ChildHealthScreenState extends State<ChildHealthScreen>
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : _familyMembers.isEmpty
-                ? _buildEmptyState(isDark, colorScheme)
-                : TabBarView(
-                    controller: _tabController,
-                    children: [
-                      HealthDataManageScreen(
-                        isChildView: true,
-                        elderlyProfileId: _selectedElderly?.elderlyProfileId
-                            ?.toString(),
+                    ? _buildEmptyState(isDark, colorScheme)
+                    : TabBarView(
+                        controller: _tabController,
+                        children: [
+                          HealthDataManageScreen(
+                            isChildView: true,
+                            elderlyProfileId:
+                                _selectedElderly?.elderlyProfileId?.toString(),
+                          ),
+                          MedicationCheckInScreen(
+                            isChildView: true,
+                            elderlyProfileId:
+                                _selectedElderly?.elderlyProfileId?.toString(),
+                          ),
+                        ],
                       ),
-                      MedicationCheckInScreen(),
-                    ],
-                  ),
           ),
         ],
       ),

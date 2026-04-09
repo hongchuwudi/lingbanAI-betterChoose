@@ -10,9 +10,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * 健康数据控制器
- */
 @Slf4j
 @RestController
 @RequestMapping("/health")
@@ -21,9 +18,6 @@ public class HealthController {
     
     private final IHealthService healthService;
     
-    /**
-     * 获取健康看板数据
-     */
     @GetMapping("/dashboard")
     public Result<HealthDashboardVO> getDashboard(HttpServletRequest request) {
         Long userId = BaseContext.getCurrentId();
@@ -44,7 +38,6 @@ public class HealthController {
         String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             try {
-                String token = authHeader.substring(7);
                 Claims claims = (Claims) request.getAttribute("claims");
                 if (claims != null) {
                     Object userIdObj = claims.get("user_id");

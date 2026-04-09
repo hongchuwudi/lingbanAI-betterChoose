@@ -20,9 +20,13 @@ class HealthDataManageScreen extends StatefulWidget {
   State<HealthDataManageScreen> createState() => _HealthDataManageScreenState();
 }
 
-class _HealthDataManageScreenState extends State<HealthDataManageScreen> {
+class _HealthDataManageScreenState extends State<HealthDataManageScreen>
+    with AutomaticKeepAliveClientMixin {
   HealthDashboard? _dashboard;
   bool _isLoading = true;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -30,10 +34,22 @@ class _HealthDataManageScreenState extends State<HealthDataManageScreen> {
     _loadData();
   }
 
+  @override
+  void didUpdateWidget(covariant HealthDataManageScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.elderlyProfileId != oldWidget.elderlyProfileId) {
+      _loadData();
+    }
+  }
+
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     try {
-      final response = await HealthService.getDashboard();
+      final response = widget.isChildView && widget.elderlyProfileId != null
+          ? await HealthService.getChildElderlyDashboard(
+              widget.elderlyProfileId!,
+            )
+          : await HealthService.getDashboard();
       if (response.isSuccess && response.data != null) {
         setState(() {
           _dashboard = HealthDashboard.fromJson(
@@ -54,6 +70,7 @@ class _HealthDataManageScreenState extends State<HealthDataManageScreen> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final authStore = Provider.of<AuthStore>(context);
@@ -149,7 +166,7 @@ class _HealthDataManageScreenState extends State<HealthDataManageScreen> {
       isDark: isDark,
       colorScheme: colorScheme,
       icon: LucideIcons.droplet,
-      iconColor: const Color(0xFF3498DB),
+      iconColor: const Color(0xFF42A5F5),
       title: '血糖',
       value: glucose != null ? '${glucose.value} mmol/L' : '暂无数据',
       subtitle: glucose?.type ?? '',
@@ -194,7 +211,7 @@ class _HealthDataManageScreenState extends State<HealthDataManageScreen> {
       isDark: isDark,
       colorScheme: colorScheme,
       icon: LucideIcons.wind,
-      iconColor: const Color(0xFF1ABC9C),
+      iconColor: const Color(0xFF4FC3F7),
       title: '血氧',
       value: spo2 != null ? '${spo2.value}%' : '暂无数据',
       subtitle: spo2?.recordTime ?? '',
@@ -222,9 +239,8 @@ class _HealthDataManageScreenState extends State<HealthDataManageScreen> {
           color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isDark
-                ? Colors.white10
-                : Colors.black.withValues(alpha: 0.05),
+            color:
+                isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
           ),
           boxShadow: [
             BoxShadow(
