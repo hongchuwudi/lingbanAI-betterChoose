@@ -327,6 +327,7 @@ public class FamilyBindingServiceImpl extends ServiceImpl<FamilyBindingMapper, F
         
         ElderlyProfile elderlyProfile = elderlyProfileMapper.selectById(binding.getElderlyProfileId());
         if (elderlyProfile != null) {
+            vo.setElderlyUserId(String.valueOf(elderlyProfile.getUserId()));
             User elderlyUser = userMapper.selectById(elderlyProfile.getUserId());
             if (elderlyUser != null) {
                 vo.setElderlyName(elderlyUser.getNickname());
@@ -349,6 +350,7 @@ public class FamilyBindingServiceImpl extends ServiceImpl<FamilyBindingMapper, F
         
         ChildProfile childProfile = childProfileMapper.selectById(binding.getChildProfileId());
         if (childProfile != null) {
+            vo.setChildUserId(String.valueOf(childProfile.getUserId()));
             User childUser = userMapper.selectById(childProfile.getUserId());
             if (childUser != null) {
                 vo.setChildName(childUser.getNickname());

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../models/user.dart';
 import '../../../config/app_config.dart';
+import '../../chat/chat_detail_screen.dart';
 
 class FamilyMemberDetailSheet extends StatelessWidget {
   final FamilyBinding binding;
@@ -130,6 +131,37 @@ class FamilyMemberDetailSheet extends StatelessWidget {
               _buildChildProfileSection(context),
             ],
             const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: () {
+                  final otherUserId = binding.getOtherUserId(effectiveRole);
+                  if (otherUserId == null || otherUserId.isEmpty) return;
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ChatDetailScreen(
+                        friendUserId: otherUserId,
+                        friendNickname: displayName,
+                        friendAvatar: displayAvatar != null && displayAvatar.isNotEmpty
+                            ? '${AppConfig.apiBaseUrl}$displayAvatar'
+                            : null,
+                      ),
+                    ),
+                  );
+                },
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                icon: const Icon(LucideIcons.messageCircle, size: 18),
+                label: const Text('发消息', style: TextStyle(fontSize: 16)),
+              ),
+            ),
+            const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(

@@ -150,14 +150,22 @@ class FamilyMemberCard extends StatelessWidget {
         : 'assets/choose_oldMans.jpeg';
 
     if (avatar != null && avatar.isNotEmpty) {
-      return Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          image: DecorationImage(
-            image: NetworkImage('${AppConfig.apiBaseUrl}$avatar'),
-            fit: BoxFit.cover,
+      return ClipOval(
+        child: Image.network(
+          avatar,
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              image: DecorationImage(
+                image: AssetImage(defaultAvatar),
+                fit: BoxFit.cover,
+              ),
+            ),
           ),
         ),
       );

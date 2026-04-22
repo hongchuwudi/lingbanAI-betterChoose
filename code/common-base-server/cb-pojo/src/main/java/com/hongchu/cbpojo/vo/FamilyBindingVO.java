@@ -32,7 +32,10 @@ public class FamilyBindingVO {
     private String childBirthday;
     
     private String myRole;
-    
+
+    private String elderlyUserId;
+    private String childUserId;
+
     // 老人档案详细信息
     private String elderlyChronicDiseases;
     private String elderlyAllergies;
