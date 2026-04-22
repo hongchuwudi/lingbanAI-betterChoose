@@ -18,7 +18,11 @@ class HealthReportScreen extends StatefulWidget {
   State<HealthReportScreen> createState() => _HealthReportScreenState();
 }
 
-class _HealthReportScreenState extends State<HealthReportScreen> {
+class _HealthReportScreenState extends State<HealthReportScreen>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
   File? _selectedFile;
   List<int>? _selectedBytes;
   String? _fileName;
@@ -48,6 +52,7 @@ class _HealthReportScreenState extends State<HealthReportScreen> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
