@@ -50,7 +50,7 @@ Future<void> _initBaiduMap() async {
   LocationFlutterPlugin().setAgreePrivacy(true);
 }
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   _initBaiduMap();
@@ -82,7 +82,11 @@ class MyApp extends StatelessWidget {
       //  改用 MultiProvider
       providers: [
         // 创建主题模型实例
-        ChangeNotifierProvider(create: (context) => ThemeModel()),
+        ChangeNotifierProvider(create: (context) {
+          final model = ThemeModel();
+          model.loadFromPrefs();
+          return model;
+        }),
         //  添加认证 Store
         ChangeNotifierProvider(create: (context) => AuthStore()),
         // 添加导航状态管理
@@ -104,6 +108,13 @@ class MyApp extends StatelessWidget {
 
             // 当前主题模式，从主题模型中获取
             themeMode: themeModel.themeMode,
+
+            builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(context).copyWith(
+                textScaler: TextScaler.linear(themeModel.fontScale),
+              ),
+              child: child!,
+            ),
 
             // 应用首页
             home: const SplashScreen(),
