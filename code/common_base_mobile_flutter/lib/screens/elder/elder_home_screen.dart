@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:provider/provider.dart';
 import '../../models/health_data.dart';
+import '../../providers/auth_provider.dart';
 import '../../services/health_service.dart';
 import '../../widgets/health_card.dart';
 
@@ -72,7 +74,7 @@ class _ElderHomeScreenState extends State<ElderHomeScreen> {
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
-            SliverToBoxAdapter(child: _buildHeader(colorScheme, isDark)),
+            SliverToBoxAdapter(child: _buildHeader(context, colorScheme, isDark)),
 
             if (_isLoading)
               const SliverFillRemaining(
@@ -124,7 +126,11 @@ class _ElderHomeScreenState extends State<ElderHomeScreen> {
     );
   }
 
-  Widget _buildHeader(ColorScheme colorScheme, bool isDark) {
+  Widget _buildHeader(BuildContext context, ColorScheme colorScheme, bool isDark) {
+    final user = Provider.of<AuthStore>(context, listen: false).user;
+    final displayName = user?.nickname?.isNotEmpty == true
+        ? user!.nickname
+        : (user?.username ?? '用户');
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 56, 20, 16),
       child: Row(
@@ -144,7 +150,7 @@ class _ElderHomeScreenState extends State<ElderHomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${_getGreeting()}，张爷爷',
+                  '${_getGreeting()}，$displayName',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,

@@ -6,11 +6,14 @@ import 'dart:async';
 import '../../models/user.dart';
 import '../../models/system_notification.dart';
 import '../../providers/auth_provider.dart';
+import '../../models/friend_message.dart';
 import '../../services/family_service.dart';
+import '../../services/message_service.dart';
 import '../../services/notification_service.dart';
 import '../../services/medication_service.dart';
 import '../../services/websocket_service.dart';
 import '../../widgets/notification/notification_helper.dart';
+import '../chat/chat_detail_screen.dart';
 import 'components/family_member_card.dart';
 import 'components/pending_request_card.dart';
 import 'components/family_member_detail_sheet.dart';
@@ -29,19 +32,23 @@ class _ElderCareScreenState extends State<ElderCareScreen>
   List<FamilyBinding> _familyMembers = [];
   List<FamilyBinding> _pendingRequests = [];
   List<SystemNotification> _notifications = [];
+  List<ConversationItem> _conversations = [];
   int _unreadCount = 0;
+  int _chatUnread = 0;
   bool _isLoading = true;
   bool _isLoadingMessages = false;
   StreamSubscription<String>? _wsSubscription;
   StreamSubscription<Map<String, dynamic>>? _notificationSubscription;
+  StreamSubscription<Map<String, dynamic>>? _chatSubscription;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(_onTabChanged);
     _loadData();
     _loadMessages();
+    _loadConversations();
     _wsSubscription = WebSocketService().familyBindingStream.listen((event) {
       _loadData();
       _loadMessages();
@@ -51,12 +58,30 @@ class _ElderCareScreenState extends State<ElderCareScreen>
     ) {
       _loadMessages();
     });
+    _chatSubscription = WebSocketService().chatMessageStream.listen((_) {
+      _loadConversations();
+    });
   }
 
   void _onTabChanged() {
     if (_tabController.index == 1 && !_isLoadingMessages) {
       _loadMessages();
+    } else if (_tabController.index == 2) {
+      _loadConversations();
     }
+  }
+
+  Future<void> _loadConversations() async {
+    try {
+      final res = await MessageService.getConversations();
+      final unreadRes = await MessageService.getUnreadCount();
+      if (mounted) {
+        setState(() {
+          _conversations = res.data ?? [];
+          _chatUnread = unreadRes.data ?? 0;
+        });
+      }
+    } catch (_) {}
   }
 
   @override
@@ -65,6 +90,7 @@ class _ElderCareScreenState extends State<ElderCareScreen>
     _tabController.dispose();
     _wsSubscription?.cancel();
     _notificationSubscription?.cancel();
+    _chatSubscription?.cancel();
     super.dispose();
   }
 
@@ -324,7 +350,7 @@ class _ElderCareScreenState extends State<ElderCareScreen>
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text('消息'),
+                      const Text('通知'),
                       if (_unreadCount > 0) ...[
                         const SizedBox(width: 6),
                         Container(
@@ -349,6 +375,35 @@ class _ElderCareScreenState extends State<ElderCareScreen>
                     ],
                   ),
                 ),
+                Tab(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text('好友消息'),
+                      if (_chatUnread > 0) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            '$_chatUnread',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
@@ -356,7 +411,11 @@ class _ElderCareScreenState extends State<ElderCareScreen>
       ),
       body: TabBarView(
         controller: _tabController,
-        children: [_buildFamilyTab(isDark), _buildMessageTab(isDark)],
+        children: [
+          _buildFamilyTab(isDark),
+          _buildMessageTab(isDark),
+          _buildChatTab(isDark),
+        ],
       ),
     );
   }
@@ -688,6 +747,213 @@ class _ElderCareScreenState extends State<ElderCareScreen>
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showNewChatSheet() {
+    final currentRole =
+        Provider.of<AuthStore>(context, listen: false).user?.roleCode;
+    final effectiveRole = currentRole == 'oldMan' ? 'elderly' : 'child';
+
+    final available = _familyMembers.where((b) {
+      return b.getOtherUserId(effectiveRole) != null;
+    }).toList();
+
+    if (available.isEmpty) {
+      NotificationHelper.showError(message: '暂无可发消息的家人，请先添加家人关系');
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        final isDark = Theme.of(ctx).brightness == Brightness.dark;
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                child: Text(
+                  '选择联系人',
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
+                ),
+              ),
+              const Divider(height: 1),
+              ...available.map((b) {
+                final name = b.getDisplayName(effectiveRole);
+                final avatar = b.getDisplayAvatar(effectiveRole);
+                final otherId = b.getOtherUserId(effectiveRole)!;
+                return ListTile(
+                  leading: _buildAvatar(avatar, name),
+                  title: Text(name,
+                      style: const TextStyle(fontWeight: FontWeight.w500)),
+                  subtitle: Text(b.relationType ?? '家人',
+                      style: const TextStyle(fontSize: 13)),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ChatDetailScreen(
+                          friendUserId: otherId,
+                          friendNickname: name,
+                          friendAvatar: avatar,
+                        ),
+                      ),
+                    ).then((_) => _loadConversations());
+                  },
+                );
+              }),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildChatTab(bool isDark) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    final fab = FloatingActionButton(
+      heroTag: 'chat_fab',
+      onPressed: _showNewChatSheet,
+      backgroundColor: colorScheme.primary,
+      foregroundColor: colorScheme.onPrimary,
+      child: const Icon(LucideIcons.messageSquarePlus),
+    );
+
+    if (_conversations.isEmpty) {
+      return Stack(
+        children: [
+          _buildEmptyState(
+            icon: LucideIcons.messageSquare,
+            title: '暂无好友消息',
+            subtitle: '点击右下角发起新对话',
+          ),
+          Positioned(bottom: 24, right: 24, child: fab),
+        ],
+      );
+    }
+
+    return Stack(
+      children: [
+        RefreshIndicator(
+          onRefresh: _loadConversations,
+          child: ListView.separated(
+            padding: const EdgeInsets.only(bottom: 96, top: 0),
+            itemCount: _conversations.length,
+            separatorBuilder: (_, __) => const Divider(height: 1, indent: 72),
+            itemBuilder: (_, i) {
+              final item = _conversations[i];
+              return ListTile(
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                leading: _buildAvatar(item.friendAvatar, item.friendNickname),
+                title: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        item.friendNickname,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w600, fontSize: 16),
+                      ),
+                    ),
+                    if (item.lastMessageTime != null)
+                      Text(
+                        _formatTime(item.lastMessageTime!),
+                        style: TextStyle(
+                            fontSize: 12,
+                            color: isDark ? Colors.white38 : Colors.black38),
+                      ),
+                  ],
+                ),
+                subtitle: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        item.lastMessage ?? '',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                            fontSize: 13,
+                            color: isDark ? Colors.white54 : Colors.black54),
+                      ),
+                    ),
+                    if (item.unreadCount > 0) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: colorScheme.error,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          item.unreadCount > 99
+                              ? '99+'
+                              : '${item.unreadCount}',
+                          style: TextStyle(
+                              fontSize: 11, color: colorScheme.onError),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                onTap: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ChatDetailScreen(
+                        friendUserId: item.friendUserId,
+                        friendNickname: item.friendNickname,
+                        friendAvatar: item.friendAvatar,
+                      ),
+                    ),
+                  );
+                  _loadConversations();
+                },
+              );
+            },
+          ),
+        ),
+        Positioned(bottom: 24, right: 24, child: fab),
+      ],
+    );
+  }
+
+  Widget _buildAvatar(String? avatar, String name) {
+    if (avatar != null && avatar.isNotEmpty) {
+      return CircleAvatar(
+        radius: 24,
+        child: ClipOval(
+          child: Image.network(
+            avatar,
+            width: 48,
+            height: 48,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => Text(
+              name.isNotEmpty ? name.substring(0, 1) : '?',
+              style: const TextStyle(fontSize: 18),
+            ),
+          ),
+        ),
+      );
+    }
+    return CircleAvatar(
+      radius: 24,
+      child: Text(
+        name.isNotEmpty ? name.substring(0, 1) : '?',
+        style: const TextStyle(fontSize: 18),
       ),
     );
   }
