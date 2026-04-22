@@ -1,7 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ThemeModel extends ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.system;
+  double _fontScale = 1.0;
+
+  double get fontScale => _fontScale;
+
+  String get fontScaleLabel {
+    if (_fontScale <= 0.85) return '小';
+    if (_fontScale <= 1.0) return '标准';
+    if (_fontScale <= 1.15) return '大';
+    return '超大';
+  }
+
+  Future<void> loadFromPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    final scale = prefs.getDouble('font_scale') ?? 1.0;
+    final modeIndex = prefs.getInt('theme_mode') ?? 2;
+    _fontScale = scale;
+    _themeMode = ThemeMode.values[modeIndex.clamp(0, 2)];
+    notifyListeners();
+  }
+
+  Future<void> setFontScale(double scale) async {
+    _fontScale = scale;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble('font_scale', scale);
+    notifyListeners();
+  }
 
   ThemeMode get themeMode => _themeMode;
 
@@ -29,8 +56,10 @@ class ThemeModel extends ChangeNotifier {
     }
   }
 
-  void setThemeMode(ThemeMode mode) {
+  Future<void> setThemeMode(ThemeMode mode) async {
     _themeMode = mode;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('theme_mode', mode.index);
     notifyListeners();
   }
 

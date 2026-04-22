@@ -132,6 +132,8 @@ class FamilyBinding {
   final String? childBirthday;
   final String? myRole;
   final String? elderlyToChildRelation;
+  final String? elderlyUserId;
+  final String? childUserId;
 
   // 老人档案详细信息
   final String? elderlyChronicDiseases;
@@ -169,6 +171,8 @@ class FamilyBinding {
     this.elderlyBirthday,
     this.childBirthday,
     this.myRole,
+    this.elderlyUserId,
+    this.childUserId,
     this.elderlyChronicDiseases,
     this.elderlyAllergies,
     this.elderlyBloodType,
@@ -216,6 +220,14 @@ class FamilyBinding {
       return childPhone;
     } else {
       return elderlyPhone;
+    }
+  }
+
+  String? getOtherUserId(String myRole) {
+    if (myRole == 'elderly') {
+      return childUserId;
+    } else {
+      return elderlyUserId;
     }
   }
 }
