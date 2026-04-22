@@ -28,7 +28,7 @@ public class EmailUtil {
     public void sendSimpleEmail(String to, String subject, String content) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(username);
+            message.setFrom(CommonData.PROJECT_NAME + " <" + username + ">");
             message.setTo(to);
             message.setSubject(subject);
             message.setText(content);
