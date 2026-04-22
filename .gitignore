@@ -78,6 +78,9 @@ application-*.properties
 **/application-test.yml
 
 # -------------------- 敏感信息 --------------------
+# API 密钥配置
+**/lib/config/api_keys.dart
+
 # SQL 文件 (可能包含数据库结构)
 *.sql
 
