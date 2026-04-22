@@ -1,5 +1,7 @@
 package com.hongchu.cbservice.config;
 
+import io.netty.resolver.DefaultAddressResolverGroup;
+import org.springframework.boot.web.reactive.function.client.WebClientCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
@@ -14,6 +16,21 @@ import java.time.Duration;
 
 @Configuration
 public class WebClientConfig {
+
+    /**
+     * 让所有经 Spring Boot 自动配置创建的 WebClient.Builder（含 Spring AI 内部 WebClient）
+     * 改用 JVM 内置 DNS（InetAddress），绕过 Netty 的异步 DNS 解析器。
+     * 解决内网 DNS 无法解析 dashscope.aliyuncs.com 的问题。
+     * Spring Boot 3.3+ 移除了 ReactorNettyHttpClientMapper，改用 WebClientCustomizer。
+     */
+    @Bean
+    public WebClientCustomizer jvmDnsWebClientCustomizer() {
+        return builder -> builder.clientConnector(
+                new ReactorClientHttpConnector(
+                        HttpClient.create().resolver(DefaultAddressResolverGroup.INSTANCE)
+                )
+        );
+    }
 
     /**
      * 通用的WebClient，用于桌面端HTTP请求
