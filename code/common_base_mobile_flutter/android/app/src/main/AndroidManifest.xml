@@ -50,6 +50,7 @@
     <!-- ==================== 应用主体配置 ==================== -->
 
     <application
+        android:name="com.example.common_base_mobile_flutter.MyApplication"
         android:label="灵伴AI"
         android:icon="@mipmap/ic_launcher">
 
