@@ -46,7 +46,7 @@ public class CommonAIChatConfig {
         log.info("开始配置聊天model，注册工具: DateTimeTool, WeatherTool, HealthCalculatorTool, HealthKnowledgeTool, LifestyleTool");
 
         return ChatClient.builder(model)
-                .defaultOptions(ChatOptions.builder().model("qwen-max-latest").build())
+                .defaultOptions(ChatOptions.builder().model("qwen-vl-max").build())
                 .defaultSystem("""
                         # 角色定位
                         你是名为”小灵”的健康科普与情感陪伴助手，服务对象是55岁以上的中老年人。

@@ -153,11 +153,9 @@ public class VoiceServiceImpl implements IVoiceService {
         long startTime = System.currentTimeMillis();
 
         try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            synthesizeStream(text, baos);
+            byte[] audioData = synthesize(text);
             
-            byte[] audioData = baos.toByteArray();
-            if (audioData.length == 0) {
+            if (audioData == null || audioData.length == 0) {
                 throw new VoiceServiceException("语音合成返回空数据");
             }
 

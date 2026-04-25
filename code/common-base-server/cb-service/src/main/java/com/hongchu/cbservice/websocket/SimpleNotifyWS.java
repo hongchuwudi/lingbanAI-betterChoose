@@ -164,10 +164,13 @@ public class SimpleNotifyWS {
      */
     public static void notifyUser(String userId, String message) {
         Session session = userSessions.get(userId);
+        log.info("WebSocket notifyUser: userId={}, sessionExists={}, isOpen={}", 
+                userId, session != null, session != null && session.isOpen());
+        
         if (session != null && session.isOpen()) {
             try {
                 session.getBasicRemote().sendText(message);
-                log.debug("发送通知给用户 {}: {}", userId, message);
+                log.info("发送通知给用户 {} 成功", userId);
             } catch (IOException e) {
                 log.error("发送通知给用户 {} 失败", userId, e);
                 // 发送失败，清理连接
@@ -175,7 +178,7 @@ public class SimpleNotifyWS {
                 sessionUsers.remove(session);
             }
         } else {
-            log.debug("用户 {} 不在线，无法发送通知", userId);
+            log.warn("用户 {} 不在线，无法发送通知，当前在线用户: {}", userId, userSessions.keySet());
         }
     }
 

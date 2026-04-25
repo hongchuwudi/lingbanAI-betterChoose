@@ -11,12 +11,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.content.Media;
+import org.springframework.core.io.UrlResource;
 import org.springframework.http.MediaType;
 import org.springframework.util.MimeType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Flux;
 
+import java.net.MalformedURLException;
 import java.util.List;
 import java.util.Objects;
 
@@ -87,22 +89,29 @@ public class ChatController {
 
     private Flux<String> MultipartFileChat(String prompt, String chatId, List<MultipartFile> files, 
                                            List<String> imageUrls) {
-        List<Media> medias = files.stream()
-                .map(file -> new Media(
-                            MimeType.valueOf(Objects.requireNonNull(file.getContentType())),
-                            file.getResource())
-                        )
-                .toList();
+        List<Media> medias = new java.util.ArrayList<>();
         
-        String imagePrefix = "";
         if (imageUrls != null && !imageUrls.isEmpty()) {
-            imagePrefix = "[images:" + String.join(",", imageUrls) + "]";
+            for (String imageUrl : imageUrls) {
+                try {
+                    UrlResource urlResource = new UrlResource(imageUrl);
+                    Media media = new Media(MimeType.valueOf("image/jpeg"), urlResource);
+                    medias.add(media);
+                    log.info("添加图片URL到AI请求: {}", imageUrl);
+                } catch (MalformedURLException e) {
+                    log.error("创建图片Media失败, URL格式错误: {}", e.getMessage());
+                }
+            }
         }
-        String fullPrompt = imagePrefix + prompt;
         
         StringBuilder fullResponse = new StringBuilder();
         return chatClient.prompt()
-                .user(p -> p.text(fullPrompt).media(medias.toArray(Media[]::new)))
+                .user(p -> {
+                    p.text(prompt);
+                    if (!medias.isEmpty()) {
+                        p.media(medias.toArray(Media[]::new));
+                    }
+                })
                 .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, chatId))
                 .stream()
                 .content()

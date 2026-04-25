@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -109,11 +110,13 @@ public class WebSocketMessage implements Serializable {
      * 创建聊天消息
      */
     public static WebSocketMessage chatMessage(String fromUserId, String toUserId, String content) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("content", content);
         return WebSocketMessage.builder()
                 .type("chat_message")
                 .fromUserId(fromUserId)
                 .toUserId(toUserId)
-                .data(Map.of("content", content))
+                .data(data)
                 .timestamp(System.currentTimeMillis())
                 .build();
     }

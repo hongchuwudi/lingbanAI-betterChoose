@@ -33,6 +33,8 @@ public class FriendMessageServiceImpl extends ServiceImpl<FriendMessageMapper, F
     @Override
     @Transactional
     public FriendMessageVO sendMessage(Long fromUserId, Long toUserId, String content) {
+        log.info("发送好友消息: fromUserId={}, toUserId={}, content={}", fromUserId, toUserId, content);
+        
         FriendMessage msg = FriendMessage.builder()
                 .fromUserId(fromUserId)
                 .toUserId(toUserId)
@@ -57,9 +59,11 @@ public class FriendMessageServiceImpl extends ServiceImpl<FriendMessageMapper, F
                 wsMsg.getData().put("fromAvatar", sender.getAvatar() != null ? sender.getAvatar() : "");
             }
             String json = objectMapper.writeValueAsString(wsMsg);
+            log.info("WebSocket 推送好友消息: toUserId={}, json={}", toUserId, json);
             SimpleNotifyWS.notifyUser(String.valueOf(toUserId), json);
+            log.info("WebSocket 推送好友消息完成");
         } catch (Exception e) {
-            log.warn("WebSocket 推送消息失败，接收方可能不在线: {}", e.getMessage());
+            log.error("WebSocket 推送消息失败: {}", e.getMessage(), e);
         }
 
         return toVO(msg, fromUserId);

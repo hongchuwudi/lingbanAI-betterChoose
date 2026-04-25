@@ -7,8 +7,7 @@ import '../models/theme_model.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/notification/notification_helper.dart';
 import '../utils/http_interceptor.dart';
-
-const String _appVersion = '1.0.0';
+import '../config/app_config.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -41,7 +40,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<int> _dirSize(Directory dir) async {
     int total = 0;
     try {
-      await for (final entity in dir.list(recursive: true, followLinks: false)) {
+      await for (final entity
+          in dir.list(recursive: true, followLinks: false)) {
         if (entity is File) {
           total += await entity.length();
         }
@@ -136,8 +136,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       title: Text('主题颜色',
           style: TextStyle(fontSize: 16, color: colorScheme.onSurface)),
       subtitle: Text(themeModel.themeModeDescription,
-          style:
-              TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant)),
+          style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant)),
       trailing: Icon(LucideIcons.chevronRight,
           size: 18, color: colorScheme.onSurfaceVariant),
       onTap: () => _showThemeDialog(context, themeModel),
@@ -153,8 +152,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       title: Text('字体大小',
           style: TextStyle(fontSize: 16, color: colorScheme.onSurface)),
       subtitle: Text(themeModel.fontScaleLabel,
-          style:
-              TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant)),
+          style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant)),
       trailing: Icon(LucideIcons.chevronRight,
           size: 18, color: colorScheme.onSurfaceVariant),
       onTap: () => _showFontSizeDialog(context, themeModel),
@@ -196,8 +194,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return ListTile(
-      leading:
-          Icon(LucideIcons.fileText, color: colorScheme.primary, size: 22),
+      leading: Icon(LucideIcons.fileText, color: colorScheme.primary, size: 22),
       title: Text('用户协议',
           style: TextStyle(fontSize: 16, color: colorScheme.onSurface)),
       trailing: Icon(LucideIcons.chevronRight,
@@ -226,9 +223,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       leading: Icon(LucideIcons.tag, color: colorScheme.primary, size: 22),
       title: Text('版本信息',
           style: TextStyle(fontSize: 16, color: colorScheme.onSurface)),
-      subtitle: Text('v$_appVersion',
-          style:
-              TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant)),
+      subtitle: Text('v${AppConfig.appVersion}',
+          style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant)),
       trailing: ElevatedButton(
         onPressed: () => _checkUpdate(context),
         style: ElevatedButton.styleFrom(
@@ -261,13 +257,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return ListTile(
-      leading:
-          Icon(LucideIcons.trash2, color: colorScheme.primary, size: 22),
+      leading: Icon(LucideIcons.trash2, color: colorScheme.primary, size: 22),
       title: Text('清除缓存',
           style: TextStyle(fontSize: 16, color: colorScheme.onSurface)),
       subtitle: Text('缓存大小: $_cacheSize',
-          style:
-              TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant)),
+          style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant)),
       trailing: Icon(LucideIcons.chevronRight,
           size: 18, color: colorScheme.onSurfaceVariant),
       onTap: () => _showClearCacheDialog(context),
@@ -278,8 +272,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return ListTile(
-      leading: Icon(LucideIcons.messageSquare,
-          color: colorScheme.primary, size: 22),
+      leading:
+          Icon(LucideIcons.messageSquare, color: colorScheme.primary, size: 22),
       title: Text('意见反馈',
           style: TextStyle(fontSize: 16, color: colorScheme.onSurface)),
       trailing: Icon(LucideIcons.chevronRight,
@@ -296,11 +290,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       title: '',
       children: [
         ListTile(
-          leading:
-              Icon(LucideIcons.logOut, color: colorScheme.error, size: 22),
+          leading: Icon(LucideIcons.logOut, color: colorScheme.error, size: 22),
           title: Text('退出登录',
-              style:
-                  TextStyle(fontSize: 16, color: colorScheme.error)),
+              style: TextStyle(fontSize: 16, color: colorScheme.error)),
           onTap: () => _showLogoutDialog(context),
         ),
       ],
@@ -375,8 +367,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: colorScheme.surface,
-        title: Text('选择主题',
-            style: TextStyle(color: colorScheme.onSurface)),
+        title: Text('选择主题', style: TextStyle(color: colorScheme.onSurface)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -428,9 +419,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return ListTile(
       leading: Icon(icon, color: colorScheme.primary),
       title: Text(title, style: TextStyle(color: colorScheme.onSurface)),
-      trailing: isSelected
-          ? Icon(Icons.check, color: colorScheme.primary)
-          : null,
+      trailing:
+          isSelected ? Icon(Icons.check, color: colorScheme.primary) : null,
       onTap: onTap,
     );
   }
@@ -444,23 +434,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
           backgroundColor: colorScheme.surface,
-          title: Text('字体大小',
-              style: TextStyle(color: colorScheme.onSurface)),
+          title: Text('字体大小', style: TextStyle(color: colorScheme.onSurface)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 '预览文字大小',
                 style: TextStyle(
-                    fontSize: 16 * tempScale,
-                    color: colorScheme.onSurface),
+                    fontSize: 16 * tempScale, color: colorScheme.onSurface),
               ),
               const SizedBox(height: 16),
               Row(
                 children: [
                   Text('小',
-                      style:
-                          TextStyle(color: colorScheme.onSurfaceVariant)),
+                      style: TextStyle(color: colorScheme.onSurfaceVariant)),
                   Expanded(
                     child: Slider(
                       value: tempScale,
@@ -468,20 +455,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       max: 1.3,
                       divisions: 5,
                       label: _scaleName(tempScale),
-                      onChanged: (v) =>
-                          setDialogState(() => tempScale = v),
+                      onChanged: (v) => setDialogState(() => tempScale = v),
                     ),
                   ),
                   Text('大',
-                      style:
-                          TextStyle(color: colorScheme.onSurfaceVariant)),
+                      style: TextStyle(color: colorScheme.onSurfaceVariant)),
                 ],
               ),
               Text(
                 _scaleName(tempScale),
                 style: TextStyle(
-                    color: colorScheme.primary,
-                    fontWeight: FontWeight.w500),
+                    color: colorScheme.primary, fontWeight: FontWeight.w500),
               ),
             ],
           ),
@@ -489,8 +473,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             TextButton(
               onPressed: () => Navigator.pop(ctx),
               child: Text('取消',
-                  style:
-                      TextStyle(color: colorScheme.onSurfaceVariant)),
+                  style: TextStyle(color: colorScheme.onSurfaceVariant)),
             ),
             ElevatedButton(
               onPressed: () {
@@ -520,18 +503,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _checkUpdate(BuildContext context) async {
     final colorScheme = Theme.of(context).colorScheme;
     try {
-      final response = await HttpInterceptorManager().interceptor
+      final response = await HttpInterceptorManager()
+          .interceptor
           .get<Map<String, dynamic>>(path: '/app/version');
       if (!mounted) return;
       if (response.isSuccess && response.data != null) {
-        final latest = response.data!['version']?.toString() ?? _appVersion;
-        if (latest != _appVersion) {
+        final latest =
+            response.data!['version']?.toString() ?? AppConfig.appVersion;
+        if (latest != AppConfig.appVersion) {
           _showUpdateDialog(context, latest, colorScheme);
           return;
         }
       }
     } catch (_) {}
-    NotificationHelper.showSuccess(message: '已是最新版本 v$_appVersion');
+    NotificationHelper.showSuccess(message: '已是最新版本 v${AppConfig.appVersion}');
   }
 
   void _showUpdateDialog(
@@ -540,15 +525,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: cs.surface,
-        title:
-            Text('发现新版本', style: TextStyle(color: cs.onSurface)),
+        title: Text('发现新版本', style: TextStyle(color: cs.onSurface)),
         content: Text('最新版本 v$newVersion，建议更新。',
             style: TextStyle(color: cs.onSurface)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('稍后',
-                style: TextStyle(color: cs.onSurfaceVariant)),
+            child: Text('稍后', style: TextStyle(color: cs.onSurfaceVariant)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context),
@@ -570,16 +553,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: colorScheme.surface,
-        title: Text('清除缓存',
-            style: TextStyle(color: colorScheme.onSurface)),
+        title: Text('清除缓存', style: TextStyle(color: colorScheme.onSurface)),
         content: Text('确定要清除缓存吗？这将删除应用中的临时文件（$_cacheSize）。',
             style: TextStyle(color: colorScheme.onSurface)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text('取消',
-                style:
-                    TextStyle(color: colorScheme.onSurfaceVariant)),
+                style: TextStyle(color: colorScheme.onSurfaceVariant)),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -607,15 +588,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
           backgroundColor: colorScheme.surface,
-          title: Text('意见反馈',
-              style: TextStyle(color: colorScheme.onSurface)),
+          title: Text('意见反馈', style: TextStyle(color: colorScheme.onSurface)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text('请告诉我们您的建议或遇到的问题：',
                   style: TextStyle(
-                      fontSize: 14,
-                      color: colorScheme.onSurfaceVariant)),
+                      fontSize: 14, color: colorScheme.onSurfaceVariant)),
               const SizedBox(height: 12),
               TextField(
                 controller: controller,
@@ -638,8 +617,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             TextButton(
               onPressed: () => Navigator.pop(ctx),
               child: Text('取消',
-                  style:
-                      TextStyle(color: colorScheme.onSurfaceVariant)),
+                  style: TextStyle(color: colorScheme.onSurfaceVariant)),
             ),
             ElevatedButton(
               onPressed: isSending
@@ -647,18 +625,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   : () async {
                       final text = controller.text.trim();
                       if (text.isEmpty) {
-                        NotificationHelper.showError(
-                            message: '请输入反馈内容');
+                        NotificationHelper.showError(message: '请输入反馈内容');
                         return;
                       }
                       setDialogState(() => isSending = true);
                       try {
-                        await HttpInterceptorManager()
-                            .interceptor
-                            .post<void>(
-                              path: '/user/feedback',
-                              data: {'content': text},
-                            );
+                        await HttpInterceptorManager().interceptor.post<void>(
+                          path: '/user/feedback',
+                          data: {'content': text},
+                        );
                       } catch (_) {}
                       if (ctx.mounted) Navigator.pop(ctx);
                       NotificationHelper.showSuccess(message: '感谢您的反馈！');
@@ -689,26 +664,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: colorScheme.surface,
-        title: Text('退出登录',
-            style: TextStyle(color: colorScheme.onSurface)),
-        content: Text('确定要退出登录吗？',
-            style: TextStyle(color: colorScheme.onSurface)),
+        title: Text('退出登录', style: TextStyle(color: colorScheme.onSurface)),
+        content:
+            Text('确定要退出登录吗？', style: TextStyle(color: colorScheme.onSurface)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text('取消',
-                style:
-                    TextStyle(color: colorScheme.onSurfaceVariant)),
+                style: TextStyle(color: colorScheme.onSurfaceVariant)),
           ),
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(context);
-              final authStore =
-                  Provider.of<AuthStore>(context, listen: false);
+              final authStore = Provider.of<AuthStore>(context, listen: false);
               await authStore.logout();
               if (mounted) {
-                Navigator.of(context).pushNamedAndRemoveUntil(
-                    '/login', (route) => false);
+                Navigator.of(context)
+                    .pushNamedAndRemoveUntil('/login', (route) => false);
               }
             },
             style: ElevatedButton.styleFrom(
@@ -729,8 +701,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: colorScheme.surface,
-        title: Text('关于软件',
-            style: TextStyle(color: colorScheme.onSurface)),
+        title: Text('关于软件', style: TextStyle(color: colorScheme.onSurface)),
         content: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -756,10 +727,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             fontWeight: FontWeight.bold,
                             color: colorScheme.onSurface)),
                     const SizedBox(height: 4),
-                    Text('v$_appVersion',
+                    Text('v${AppConfig.appVersion}',
                         style: TextStyle(
-                            fontSize: 14,
-                            color: colorScheme.onSurfaceVariant)),
+                            fontSize: 14, color: colorScheme.onSurfaceVariant)),
                   ],
                 ),
               ),
@@ -773,9 +743,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Text(
                 '灵伴AI是一款专为老年人和其家人设计的智能健康关怀应用。通过AI驱动的功能，帮助老年人更好地管理健康，让家人能够实时了解老人的身体状况。',
                 style: TextStyle(
-                    fontSize: 14,
-                    color: colorScheme.onSurface,
-                    height: 1.5),
+                    fontSize: 14, color: colorScheme.onSurface, height: 1.5),
               ),
             ],
           ),
@@ -783,8 +751,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('关闭',
-                style: TextStyle(color: colorScheme.primary)),
+            child: Text('关闭', style: TextStyle(color: colorScheme.primary)),
           ),
         ],
       ),
@@ -798,8 +765,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: colorScheme.surface,
-        title: Text('用户协议',
-            style: TextStyle(color: colorScheme.onSurface)),
+        title: Text('用户协议', style: TextStyle(color: colorScheme.onSurface)),
         content: SingleChildScrollView(
           child: Text(
             '1. 服务条款\n使用本应用即表示您同意本协议的所有条款。\n\n'
@@ -813,8 +779,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('关闭',
-                style: TextStyle(color: colorScheme.primary)),
+            child: Text('关闭', style: TextStyle(color: colorScheme.primary)),
           ),
         ],
       ),
@@ -828,8 +793,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: colorScheme.surface,
-        title: Text('隐私政策',
-            style: TextStyle(color: colorScheme.onSurface)),
+        title: Text('隐私政策', style: TextStyle(color: colorScheme.onSurface)),
         content: SingleChildScrollView(
           child: Text(
             '1. 信息收集\n我们会收集您主动提供的注册信息、健康数据、位置信息和设备信息。\n\n'
@@ -843,8 +807,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('关闭',
-                style: TextStyle(color: colorScheme.primary)),
+            child: Text('关闭', style: TextStyle(color: colorScheme.primary)),
           ),
         ],
       ),

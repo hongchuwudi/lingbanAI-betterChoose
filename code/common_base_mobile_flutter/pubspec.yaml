@@ -1,7 +1,7 @@
 name: common_base_mobile_flutter
 description: "灵伴AI - Flutter 移动端应用"
 publish_to: 'none'  # 防止意外发布到 pub.dev
-version: 1.0.1+2    # 应用版本号 1.0.1b
+version: 1.0.2+3    # 应用版本号 1.0.2
 
 # Dart SDK 版本要求
 environment:

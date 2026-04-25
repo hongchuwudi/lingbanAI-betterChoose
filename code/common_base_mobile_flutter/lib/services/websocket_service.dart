@@ -274,8 +274,12 @@ class WebSocketService with WidgetsBindingObserver {
     print('收到聊天消息: 来自 $fromUserId - $content');
 
     _audioService.playReceiveMessage();
+    
     if (activeChatUserId != fromUserId) {
-      NotificationHelper.showSuccess(message: '$fromNickname: $content');
+      NotificationHelper.showInfo(
+        message: '$fromNickname: $content',
+        duration: const Duration(seconds: 5),
+      );
     }
 
     _chatMessageController.add({

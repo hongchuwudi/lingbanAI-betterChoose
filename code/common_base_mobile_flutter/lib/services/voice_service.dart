@@ -82,18 +82,37 @@ class VoiceService {
     try {
       _isPlaying = true;
 
-      final encodedText = Uri.encodeComponent(text);
-      final streamUrl =
-          '${AppConfig.apiBaseUrl}/ai/voice/synthesize?text=$encodedText';
+      final response = await _dio.post(
+        '${AppConfig.apiBaseUrl}/ai/voice/synthesize-with-url',
+        data: {'text': text},
+        options: Options(responseType: ResponseType.json),
+      );
 
-      if (kIsWeb) {
-        await _audioPlayer.play(UrlSource(streamUrl));
+      if (response.statusCode == 200 && response.data != null) {
+        final data = response.data;
+        String? audioUrl;
+        if (data is Map) {
+          if (data.containsKey('data') && data['data'] is Map) {
+            audioUrl = data['data']['audioUrl'];
+          } else {
+            audioUrl = data['audioUrl'];
+          }
+        }
+
+        if (audioUrl != null && audioUrl.isNotEmpty) {
+          if (kIsWeb) {
+            await _audioPlayer.play(UrlSource(audioUrl));
+          } else {
+            final tempDir = await getTemporaryDirectory();
+            final audioFile = File('${tempDir.path}/tts_output.mp3');
+            await _dio.download(audioUrl, audioFile.path);
+            await _audioPlayer.play(DeviceFileSource(audioFile.path));
+          }
+        } else {
+          throw Exception('语音合成返回空URL');
+        }
       } else {
-        final tempDir = await getTemporaryDirectory();
-        final audioFile = File('${tempDir.path}/tts_output.mp3');
-
-        await _dio.download(streamUrl, audioFile.path);
-        await _audioPlayer.play(DeviceFileSource(audioFile.path));
+        throw Exception('语音合成失败: ${response.statusCode}');
       }
 
       _audioPlayer.onPlayerComplete.listen((_) {
